@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS applications (
   email       TEXT        NOT NULL DEFAULT '',
   phone       TEXT        NOT NULL DEFAULT '',
   cover_letter TEXT       NOT NULL DEFAULT '',
+  cv_url      TEXT        NOT NULL DEFAULT '',
   status      TEXT        NOT NULL DEFAULT 'new',
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

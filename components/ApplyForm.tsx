@@ -19,19 +19,12 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
 
     const form = e.currentTarget;
     const data = new FormData(form);
+    data.set('jobId', jobId);
+    data.set('jobTitle', jobTitle);
 
     const res = await fetch('/api/jobs/apply', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jobId,
-        jobTitle,
-        firstName: data.get('firstName'),
-        lastName: data.get('lastName'),
-        email: data.get('email'),
-        phone: data.get('phone'),
-        coverLetter: data.get('coverLetter'),
-      }),
+      body: data,
     });
 
     setLoading(false);
@@ -96,6 +89,16 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
           type="tel"
           placeholder="+1 206 555 0100"
           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Upload CV</label>
+        <input
+          required
+          name="cv"
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
         />
       </div>
       <div>

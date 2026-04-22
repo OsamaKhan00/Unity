@@ -10,6 +10,7 @@ interface Application {
   email: string;
   phone: string;
   cover_letter: string;
+  cv_url: string;
   status: string;
   created_at: string;
 }
@@ -100,11 +101,24 @@ export default function AdminApplicationsPage() {
                   ))}
                 </select>
 
+                {app.cv_url ? (
+                  <a
+                    href={app.cv_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-brand-600 hover:underline shrink-0"
+                  >
+                    View CV
+                  </a>
+                ) : (
+                  <span className="text-xs text-gray-300 shrink-0">No CV</span>
+                )}
+
                 <button
                   onClick={() => setExpanded(expanded === app.id ? null : app.id)}
                   className="text-xs text-brand-600 hover:underline shrink-0"
                 >
-                  {expanded === app.id ? 'Hide' : 'View'}
+                  {expanded === app.id ? 'Hide' : 'Details'}
                 </button>
 
                 <button
