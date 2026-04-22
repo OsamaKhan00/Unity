@@ -1,0 +1,56 @@
+{
+  "hero_headline": "Connecting Exceptional Talent with Industry-Leading Organizations",
+  "hero_subheading": "Apex Talent Group specializes in precision recruitment across IT, Data Center, and Pharmaceutical industries — delivering the right people, every time.",
+  "hero_badge": "Seattle-Based · Nationally Recognized",
+  "mission_statement": "To bridge the gap between exceptional talent and industry-leading organizations — delivering precision recruitment that drives innovation, growth, and lasting impact.",
+  "stats": [
+    { "value": "20+",  "label": "Years of Industry Experience" },
+    { "value": "500+", "label": "Successful Placements" },
+    { "value": "3",    "label": "Core Industry Verticals" },
+    { "value": "100+", "label": "Partner Companies" }
+  ],
+  "services": [
+    {
+      "title": "IT Solutions, Software & DevOps",
+      "desc": "We source top-tier engineers, architects, and DevOps professionals for technology companies of all sizes.",
+      "href": "/services#it",
+      "icon": "code"
+    },
+    {
+      "title": "Data Center Commissioning",
+      "desc": "Specialized staffing for critical infrastructure — from MEP engineers to BMS specialists.",
+      "href": "/services#datacenter",
+      "icon": "server"
+    },
+    {
+      "title": "Pharmaceutical Facilities",
+      "desc": "GMP-compliant talent for C&Q, validation, and pharmaceutical facility build-outs.",
+      "href": "/services#pharma",
+      "icon": "flask"
+    }
+  ],
+  "why_us": [
+    {
+      "title": "Deep Industry Roots",
+      "desc": "With over 20 years in the Seattle market — including placements at Microsoft, Amazon, and Expedia — we know what great talent looks like."
+    },
+    {
+      "title": "People-First Approach",
+      "desc": "We take the time to understand both sides of every hire, ensuring long-term success for candidates and clients alike."
+    },
+    {
+      "title": "Specialized Expertise",
+      "desc": "We don't recruit for everything. We recruit for what we know — IT, critical infrastructure, and pharmaceutical commissioning."
+    }
+  ],
+  "about_tagline": "Built on Experience. Driven by People.",
+  "about_intro": "Apex Talent Group was founded with a single belief: the right person in the right role changes everything — for the individual, the team, and the company.",
+  "cta_headline": "Ready to find your next great hire — or your next great role?",
+  "cta_subheading": "Whether you're a company looking to build your team or a candidate ready for your next challenge, we're here to help.",
+  "values": [
+    { "title": "Integrity",       "desc": "We are transparent with every client and every candidate. No smoke, no mirrors." },
+    { "title": "Precision",       "desc": "We recruit for specific industries because depth of knowledge produces better outcomes than breadth." },
+    { "title": "People First",    "desc": "Behind every job title is a person with goals, a family, and a future. We never lose sight of that." },
+    { "title": "Long-Term Focus", "desc": "We measure success not by placements made, but by placements that last." }
+  ]
+}

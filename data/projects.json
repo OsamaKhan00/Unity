@@ -1,0 +1,68 @@
+[
+  {
+    "id": "1",
+    "title": "Hyperscale Data Center Staffing — Pacific Northwest",
+    "client": "Confidential Cloud Provider",
+    "vertical": "Data Center",
+    "outcome": "Sourced and placed a 35-person commissioning team — including Cx engineers, MEP specialists, and BMS technicians — within a 6-week window for a 200MW facility build-out. Zero critical delays attributable to staffing.",
+    "year": "2024",
+    "imageUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80",
+    "featured": true,
+    "active": true
+  },
+  {
+    "id": "2",
+    "title": "Enterprise Engineering Team Expansion",
+    "client": "Seattle-Based Technology Company",
+    "vertical": "IT & Software",
+    "outcome": "Partnered with a rapidly scaling SaaS company to fill 22 engineering roles across backend, DevOps, and cloud architecture in under 90 days. Retention rate at 12 months: 91%.",
+    "year": "2024",
+    "imageUrl": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80",
+    "featured": true,
+    "active": true
+  },
+  {
+    "id": "3",
+    "title": "GMP Facility Commissioning — Biotech Startup",
+    "client": "Confidential Pharmaceutical Client",
+    "vertical": "Pharmaceutical",
+    "outcome": "Assembled a complete C&Q and validation team for a new sterile manufacturing facility. All IQ/OQ/PQ phases completed on schedule, with zero FDA observations attributable to personnel gaps.",
+    "year": "2023",
+    "imageUrl": "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80",
+    "featured": true,
+    "active": true
+  },
+  {
+    "id": "4",
+    "title": "DevOps Transformation — Financial Services Firm",
+    "client": "Pacific Northwest Financial Services",
+    "vertical": "IT & Software",
+    "outcome": "Placed a four-person DevOps team — including a lead SRE — to drive a cloud migration initiative. Infrastructure deployment time reduced by 70% within six months of team onboarding.",
+    "year": "2023",
+    "imageUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
+    "featured": false,
+    "active": true
+  },
+  {
+    "id": "5",
+    "title": "Multi-Site Data Center Technician Rollout",
+    "client": "National Colocation Provider",
+    "vertical": "Data Center",
+    "outcome": "Staffed critical facilities technicians across five regional sites simultaneously, maintaining SLA compliance throughout a 12-month expansion program.",
+    "year": "2022",
+    "imageUrl": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&q=80",
+    "featured": false,
+    "active": true
+  },
+  {
+    "id": "6",
+    "title": "Pharma Automation Specialist Placement",
+    "client": "Confidential Life Sciences Client",
+    "vertical": "Pharmaceutical",
+    "outcome": "Identified and placed a SCADA/DCS automation engineer with direct 21 CFR Part 11 experience — a profile with fewer than 200 qualified candidates nationally. Placement completed in 3 weeks.",
+    "year": "2022",
+    "imageUrl": "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&q=80",
+    "featured": false,
+    "active": true
+  }
+]

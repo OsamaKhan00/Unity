@@ -1,9 +1,11 @@
 import Link from "next/link";
 import ApplyForm from "@/components/ApplyForm";
-import { jobs, jobDescriptions } from "@/lib/jobs";
+import { getJobList, getJobDescriptions } from "@/lib/jobs";
 
 export default async function CareerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const jobs = getJobList();
+  const descriptions = getJobDescriptions();
   const job = jobs.find((j) => j.id === id);
 
   if (!job) {
@@ -30,7 +32,7 @@ export default async function CareerDetailPage({ params }: { params: Promise<{ i
           <span className="text-xs font-medium bg-gray-100 text-gray-700 px-3 py-1 rounded-full">{job.vertical}</span>
         </div>
         <p className="text-gray-700 leading-relaxed">
-          {jobDescriptions[job.id] ?? "Full job description available upon application."}
+          {descriptions[job.id] ?? "Full job description available upon application."}
         </p>
       </div>
 
