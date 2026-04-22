@@ -1,5 +1,13 @@
 -- Run this entire file in Supabase Dashboard → SQL Editor
 
+-- ── Drop existing tables (clean slate) ────────────────────────────────────────
+
+DROP TABLE IF EXISTS admin_users  CASCADE;
+DROP TABLE IF EXISTS site_content CASCADE;
+DROP TABLE IF EXISTS jobs         CASCADE;
+DROP TABLE IF EXISTS projects     CASCADE;
+DROP TABLE IF EXISTS people       CASCADE;
+
 -- ── Tables ────────────────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS people (
