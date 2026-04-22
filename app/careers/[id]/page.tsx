@@ -4,8 +4,7 @@ import { getJobList, getJobDescriptions } from "@/lib/jobs";
 
 export default async function CareerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const jobs = getJobList();
-  const descriptions = getJobDescriptions();
+  const [jobs, descriptions] = await Promise.all([getJobList(), getJobDescriptions()]);
   const job = jobs.find((j) => j.id === id);
 
   if (!job) {

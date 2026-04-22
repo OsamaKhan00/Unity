@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { readAdminUsers, writeAdminUsers, hashPassword, AdminUser, AdminRole } from '@/lib/adminUsers';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { AdminUser, AdminRole, adminUserFromRow, adminUserToRow, hashPassword } from '@/lib/adminUsers';
 import { verifyAdminToken } from '@/middleware';
 
 async function getSuperAdminOnly(request: Request) {
@@ -12,25 +13,22 @@ async function getSuperAdminOnly(request: Request) {
 }
 
 export async function GET(request: Request) {
-  if (!(await getSuperAdminOnly(request))) {
+  if (!(await getSuperAdminOnly(request)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  const users = readAdminUsers().map(({ passwordHash: _, ...u }) => u);
-  return NextResponse.json(users);
+  const { data, error } = await createAdminClient().from('admin_users').select('*');
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(
+    (data ?? []).map(adminUserFromRow).map(({ passwordHash: _, ...u }) => u)
+  );
 }
 
 export async function POST(request: Request) {
-  if (!(await getSuperAdminOnly(request))) {
+  if (!(await getSuperAdminOnly(request)))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   const body = await request.json();
-  const users = readAdminUsers();
-
-  if (users.some((u) => u.email === body.email)) {
-    return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
-  }
-
+  const { data: existing } = await createAdminClient()
+    .from('admin_users').select('id').eq('email', body.email).single();
+  if (existing) return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
   const newUser: AdminUser = {
     id: Date.now().toString(),
     email: String(body.email),
@@ -40,10 +38,9 @@ export async function POST(request: Request) {
     active: true,
     createdAt: new Date().toISOString(),
   };
-
-  users.push(newUser);
-  writeAdminUsers(users);
-
-  const { passwordHash: _, ...safeUser } = newUser;
+  const { data, error } = await createAdminClient()
+    .from('admin_users').insert(adminUserToRow(newUser)).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { passwordHash: _, ...safeUser } = adminUserFromRow(data);
   return NextResponse.json(safeUser, { status: 201 });
 }

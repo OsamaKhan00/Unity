@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { readProjects } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { projectFromRow } from '@/lib/contentData';
 
 const verticalColors: Record<string, string> = {
   'Data Center':    'bg-slate-100 text-slate-700',
@@ -13,8 +14,9 @@ const verticalAccent: Record<string, string> = {
   'Pharmaceutical': 'border-l-emerald-400',
 };
 
-export default function ProjectsPage() {
-  const projects = readProjects().filter(p => p.active);
+export default async function ProjectsPage() {
+  const { data: raw } = await createAdminClient().from('projects').select('*').order('year', { ascending: false });
+  const projects = (raw ?? []).map(projectFromRow).filter(p => p.active);
   const featured = projects.filter(p => p.featured);
   const rest     = projects.filter(p => !p.featured);
 

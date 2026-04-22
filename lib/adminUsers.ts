@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 
 export type AdminRole = 'super_admin' | 'admin' | 'editor' | 'viewer';
@@ -14,23 +12,35 @@ export interface AdminUser {
   createdAt: string;
 }
 
-const dataPath = path.join(process.cwd(), 'data', 'admin_users.json');
-
-export function readAdminUsers(): AdminUser[] {
-  try {
-    return JSON.parse(fs.readFileSync(dataPath, 'utf-8')) as AdminUser[];
-  } catch {
-    return [];
-  }
-}
-
-export function writeAdminUsers(users: AdminUser[]): void {
-  fs.writeFileSync(dataPath, JSON.stringify(users, null, 2), 'utf-8');
-}
-
 export function hashPassword(password: string): string {
   const secret = process.env.ADMIN_SECRET ?? 'fallback-secret';
   return crypto.createHash('sha256').update(password + secret).digest('hex');
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adminUserFromRow(r: any): AdminUser {
+  return {
+    id: r.id,
+    email: r.email,
+    name: r.name ?? '',
+    role: r.role as AdminRole,
+    passwordHash: r.password_hash ?? '',
+    active: r.active ?? true,
+    createdAt: r.created_at ?? new Date().toISOString(),
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adminUserToRow(u: AdminUser): any {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    password_hash: u.passwordHash,
+    active: u.active,
+    created_at: u.createdAt,
+  };
 }
 
 export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {

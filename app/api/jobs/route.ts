@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { readJobs } from '@/lib/jobsData';
+import { createAdminClient } from '@/lib/supabase/admin';
 
-// Public read-only endpoint — no auth required
 export async function GET() {
-  return NextResponse.json(readJobs());
+  const { data, error } = await createAdminClient().from('jobs').select('*');
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
 }

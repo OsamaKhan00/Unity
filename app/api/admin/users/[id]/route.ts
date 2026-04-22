@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { readAdminUsers, writeAdminUsers, hashPassword, AdminRole } from '@/lib/adminUsers';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { AdminRole, adminUserFromRow, hashPassword } from '@/lib/adminUsers';
 import { verifyAdminToken } from '@/middleware';
 
 async function isSuperAdmin(request: Request) {
@@ -13,33 +14,24 @@ async function isSuperAdmin(request: Request) {
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isSuperAdmin(request))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
   const { id } = await params;
   const body = await request.json();
-  const users = readAdminUsers();
-  const i = users.findIndex((u) => u.id === id);
-  if (i === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  users[i] = {
-    ...users[i],
-    name: body.name ?? users[i].name,
-    role: (body.role ?? users[i].role) as AdminRole,
-    active: body.active ?? users[i].active,
-    ...(body.password ? { passwordHash: hashPassword(body.password) } : {}),
-  };
-
-  writeAdminUsers(users);
-  const { passwordHash: _, ...safeUser } = users[i];
+  const update: Record<string, unknown> = {};
+  if (body.name     !== undefined) update.name   = body.name;
+  if (body.role     !== undefined) update.role   = body.role as AdminRole;
+  if (body.active   !== undefined) update.active = body.active;
+  if (body.password !== undefined) update.password_hash = hashPassword(body.password);
+  const { data, error } = await createAdminClient()
+    .from('admin_users').update(update).eq('id', id).select().single();
+  if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const { passwordHash: _, ...safeUser } = adminUserFromRow(data);
   return NextResponse.json(safeUser);
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isSuperAdmin(request))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
   const { id } = await params;
-  const users = readAdminUsers();
-  const filtered = users.filter((u) => u.id !== id);
-  if (filtered.length === users.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  writeAdminUsers(filtered);
+  const { error } = await createAdminClient().from('admin_users').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

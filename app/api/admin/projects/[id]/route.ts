@@ -1,29 +1,27 @@
 import { NextResponse } from 'next/server';
-import { readProjects, writeProjects } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { projectFromRow, projectToRow } from '@/lib/contentData';
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const project = readProjects().find((p) => p.id === id);
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(project);
+  const { data, error } = await createAdminClient()
+    .from('projects').select('*').eq('id', id).single();
+  if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json(projectFromRow(data));
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json();
-  const projects = readProjects();
-  const i = projects.findIndex((p) => p.id === id);
-  if (i === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  projects[i] = { ...projects[i], ...body, id };
-  writeProjects(projects);
-  return NextResponse.json(projects[i]);
+  const { data, error } = await createAdminClient()
+    .from('projects').update(projectToRow({ ...body, id })).eq('id', id).select().single();
+  if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json(projectFromRow(data));
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const projects = readProjects();
-  const filtered = projects.filter((p) => p.id !== id);
-  if (filtered.length === projects.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  writeProjects(filtered);
+  const { error } = await createAdminClient().from('projects').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

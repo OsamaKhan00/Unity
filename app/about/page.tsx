@@ -1,13 +1,31 @@
 import Image from 'next/image';
-import { readPeople, readSiteContent } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { SiteContent, personFromRow } from '@/lib/contentData';
 
 function avatarUrl(name: string) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=1d4ed8&color=fff&bold=true`;
 }
 
-export default function AboutPage() {
-  const content = readSiteContent();
-  const team    = readPeople().filter(p => p.active).sort((a, b) => a.order - b.order);
+export default async function AboutPage() {
+  const supabase = createAdminClient();
+  const { data: contentRow } = await supabase.from('site_content').select('data').eq('id', 1).single();
+  const raw = (contentRow?.data ?? {}) as Partial<SiteContent>;
+  const content: SiteContent = {
+    hero_headline: raw.hero_headline ?? '',
+    hero_subheading: raw.hero_subheading ?? '',
+    hero_badge: raw.hero_badge ?? '',
+    mission_statement: raw.mission_statement ?? '',
+    stats: raw.stats ?? [],
+    services: raw.services ?? [],
+    why_us: raw.why_us ?? [],
+    about_tagline: raw.about_tagline ?? '',
+    about_intro: raw.about_intro ?? '',
+    cta_headline: raw.cta_headline ?? '',
+    cta_subheading: raw.cta_subheading ?? '',
+    values: raw.values ?? [],
+  };
+  const { data: rawTeam } = await supabase.from('people').select('*').order('order', { ascending: true });
+  const team = (rawTeam ?? []).map(personFromRow).filter(p => p.active);
 
   return (
     <div className="min-h-screen bg-gray-50">

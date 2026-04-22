@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { readJobs } from '@/lib/jobsData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { Job } from '@/lib/jobsData';
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -17,7 +18,8 @@ export default async function ProfilePage() {
     .slice(0, 2)
     .toUpperCase();
 
-  const jobs = readJobs().slice(0, 3);
+  const { data: jobsRaw } = await createAdminClient().from('jobs').select('*').limit(3);
+  const jobs = (jobsRaw ?? []) as Job[];
 
   async function signOut() {
     'use server';

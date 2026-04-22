@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { readJobs, writeJobs, Job } from '@/lib/jobsData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { Job } from '@/lib/jobsData';
 
 export async function GET() {
-  return NextResponse.json(readJobs());
+  const { data, error } = await createAdminClient()
+    .from('jobs').select('*');
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const jobs = readJobs();
-
+  const body = await request.json() as Partial<Job>;
   const newJob: Job = {
     id: Date.now().toString(),
     title: String(body.title ?? ''),
@@ -18,9 +20,8 @@ export async function POST(request: Request) {
     salary: String(body.salary ?? ''),
     description: String(body.description ?? ''),
   };
-
-  jobs.push(newJob);
-  writeJobs(jobs);
-
-  return NextResponse.json(newJob, { status: 201 });
+  const { data, error } = await createAdminClient()
+    .from('jobs').insert(newJob).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }

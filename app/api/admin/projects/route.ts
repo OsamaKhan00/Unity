@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { readProjects, writeProjects, Project } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { Project, projectFromRow, projectToRow } from '@/lib/contentData';
 
 export async function GET() {
-  return NextResponse.json(readProjects());
+  const { data, error } = await createAdminClient()
+    .from('projects').select('*').order('year', { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json((data ?? []).map(projectFromRow));
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const projects = readProjects();
-
-  const project: Project = {
+  const body = await request.json() as Partial<Project>;
+  const newProject: Project = {
     id: Date.now().toString(),
     title: String(body.title ?? ''),
     client: String(body.client ?? ''),
@@ -20,8 +22,8 @@ export async function POST(request: Request) {
     featured: body.featured === true,
     active: body.active !== false,
   };
-
-  projects.push(project);
-  writeProjects(projects);
-  return NextResponse.json(project, { status: 201 });
+  const { data, error } = await createAdminClient()
+    .from('projects').insert(projectToRow(newProject)).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(projectFromRow(data), { status: 201 });
 }

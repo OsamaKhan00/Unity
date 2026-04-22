@@ -1,5 +1,6 @@
 import Image from 'next/image';
-import { readPeople } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { personFromRow } from '@/lib/contentData';
 
 const areaColors: Record<string, string> = {
   'All Verticals':       'bg-brand-100 text-brand-700',
@@ -14,8 +15,9 @@ function avatarUrl(name: string) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=128&background=1d4ed8&color=fff&bold=true`;
 }
 
-export default function PeoplePage() {
-  const team = readPeople().filter(p => p.active).sort((a, b) => a.order - b.order);
+export default async function PeoplePage() {
+  const { data: raw } = await createAdminClient().from('people').select('*').order('order', { ascending: true });
+  const team = (raw ?? []).map(personFromRow).filter(p => p.active);
 
   return (
     <div className="min-h-screen bg-gray-50">

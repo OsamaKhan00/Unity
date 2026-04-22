@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { readSiteContent } from '@/lib/contentData';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { SiteContent } from '@/lib/contentData';
 
 const iconMap: Record<string, React.ReactNode> = {
   code: (
@@ -20,8 +21,23 @@ const iconMap: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function HomePage() {
-  const content = readSiteContent();
+export default async function HomePage() {
+  const { data } = await createAdminClient().from('site_content').select('data').eq('id', 1).single();
+  const raw = (data?.data ?? {}) as Partial<SiteContent>;
+  const content: SiteContent = {
+    hero_headline: raw.hero_headline ?? '',
+    hero_subheading: raw.hero_subheading ?? '',
+    hero_badge: raw.hero_badge ?? '',
+    mission_statement: raw.mission_statement ?? '',
+    stats: raw.stats ?? [],
+    services: raw.services ?? [],
+    why_us: raw.why_us ?? [],
+    about_tagline: raw.about_tagline ?? '',
+    about_intro: raw.about_intro ?? '',
+    cta_headline: raw.cta_headline ?? '',
+    cta_subheading: raw.cta_subheading ?? '',
+    values: raw.values ?? [],
+  };
 
   return (
     <>

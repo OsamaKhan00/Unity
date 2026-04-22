@@ -1,27 +1,21 @@
 import { NextResponse } from 'next/server';
-import { readAdminUsers } from '@/lib/adminUsers';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createResetToken } from '@/lib/adminResetTokens';
 import { sendPasswordResetEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   const { email } = await request.json() as { email: string };
-
-  if (!email) {
-    return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
-  }
+  if (!email) return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
 
   const superAdminEmail = process.env.ADMIN_EMAIL;
-  const admins = readAdminUsers();
-  const isValid =
-    email === superAdminEmail ||
-    admins.some((a) => a.email === email && a.active);
+  const { data } = await createAdminClient()
+    .from('admin_users').select('id').eq('email', email).eq('active', true).single();
+  const isValid = email === superAdminEmail || !!data;
 
-  // Always return success to prevent email enumeration
   if (isValid) {
     const token = createResetToken(email);
     const origin = new URL(request.url).origin;
-    const resetUrl = `${origin}/admin/reset-password?token=${token}`;
-    await sendPasswordResetEmail(email, resetUrl, true);
+    await sendPasswordResetEmail(email, `${origin}/admin/reset-password?token=${token}`, true);
   }
 
   return NextResponse.json({ success: true });
