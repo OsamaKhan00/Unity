@@ -51,6 +51,8 @@ export async function middleware(request: NextRequest) {
   // Always allow auth API endpoints
   if (pathname.startsWith('/api/admin/auth')) return NextResponse.next();
   if (pathname === '/admin/login') return NextResponse.next();
+  if (pathname === '/admin/forgot-password') return NextResponse.next();
+  if (pathname === '/admin/reset-password') return NextResponse.next();
 
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
     const secret = process.env.ADMIN_SECRET ?? '';

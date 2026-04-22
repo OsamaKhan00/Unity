@@ -1,11 +1,11 @@
 [
   {
-    "id": "1776869357216",
-    "email": "okhan5172@gmail.com",
+    "id": "1776879825599",
+    "email": "muhammadosamakhan19@gmail.com",
     "name": "Osama Khan",
-    "role": "admin",
-    "passwordHash": "0675aec3b5dbb96ff7bf84aaaaba48a18313420136bc25603d9eba25826cff15",
+    "role": "editor",
+    "passwordHash": "32d03285db7d7992f5c02f323144c9a1fe6630c1b32b3aa194e621574a05b767",
     "active": true,
-    "createdAt": "2026-04-22T14:49:17.216Z"
+    "createdAt": "2026-04-22T17:43:45.599Z"
   }
 ]
