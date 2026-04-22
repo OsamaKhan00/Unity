@@ -1,14 +1,5 @@
 [
   {
-    "id": "2",
-    "title": "DevOps Engineer",
-    "company": "Confidential — Remote",
-    "type": "Full-time",
-    "vertical": "IT & Software",
-    "salary": "$115K–$145K",
-    "description": "An established technology firm is looking for a DevOps Engineer to improve and maintain their CI/CD pipelines, infrastructure-as-code practices, and cloud deployments. Experience with Terraform, Kubernetes, and AWS or Azure required."
-  },
-  {
     "id": "3",
     "title": "Cloud Architect (AWS)",
     "company": "Confidential — Seattle, WA",
