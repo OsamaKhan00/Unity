@@ -2,11 +2,12 @@
 
 -- ── Drop existing tables (clean slate) ────────────────────────────────────────
 
-DROP TABLE IF EXISTS admin_users  CASCADE;
-DROP TABLE IF EXISTS site_content CASCADE;
-DROP TABLE IF EXISTS jobs         CASCADE;
-DROP TABLE IF EXISTS projects     CASCADE;
-DROP TABLE IF EXISTS people       CASCADE;
+DROP TABLE IF EXISTS admin_users    CASCADE;
+DROP TABLE IF EXISTS site_content  CASCADE;
+DROP TABLE IF EXISTS jobs          CASCADE;
+DROP TABLE IF EXISTS projects      CASCADE;
+DROP TABLE IF EXISTS people        CASCADE;
+DROP TABLE IF EXISTS applications  CASCADE;
 
 -- ── Tables ────────────────────────────────────────────────────────────────────
 
@@ -59,19 +60,36 @@ CREATE TABLE IF NOT EXISTS admin_users (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS applications (
+  id          TEXT        PRIMARY KEY,
+  job_id      TEXT        NOT NULL,
+  job_title   TEXT        NOT NULL DEFAULT '',
+  first_name  TEXT        NOT NULL DEFAULT '',
+  last_name   TEXT        NOT NULL DEFAULT '',
+  email       TEXT        NOT NULL DEFAULT '',
+  phone       TEXT        NOT NULL DEFAULT '',
+  cover_letter TEXT       NOT NULL DEFAULT '',
+  status      TEXT        NOT NULL DEFAULT 'new',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ── Row Level Security ─────────────────────────────────────────────────────────
 
-ALTER TABLE people       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE projects     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jobs         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
-ALTER TABLE admin_users  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE people        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jobs          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_content  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE applications  ENABLE ROW LEVEL SECURITY;
 
 -- Public can read content tables; admin_users has no public policy
 CREATE POLICY "public_read" ON people       FOR SELECT USING (true);
 CREATE POLICY "public_read" ON projects     FOR SELECT USING (true);
 CREATE POLICY "public_read" ON jobs         FOR SELECT USING (true);
 CREATE POLICY "public_read" ON site_content FOR SELECT USING (true);
+
+-- Anyone can submit an application; reads are service-role only
+CREATE POLICY "public_insert" ON applications FOR INSERT WITH CHECK (true);
 
 -- ── Seed: people ───────────────────────────────────────────────────────────────
 
