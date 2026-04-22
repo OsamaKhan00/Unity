@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import Image from 'next/image';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { personFromRow } from '@/lib/contentData';
