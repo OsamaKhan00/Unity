@@ -36,13 +36,15 @@ CREATE TABLE IF NOT EXISTS projects (
 );
 
 CREATE TABLE IF NOT EXISTS jobs (
-  id          TEXT PRIMARY KEY,
-  title       TEXT NOT NULL DEFAULT '',
-  company     TEXT NOT NULL DEFAULT '',
-  type        TEXT NOT NULL DEFAULT 'Full-time',
-  vertical    TEXT NOT NULL DEFAULT 'IT & Software',
-  salary      TEXT NOT NULL DEFAULT '',
-  description TEXT NOT NULL DEFAULT ''
+  id             TEXT PRIMARY KEY,
+  title          TEXT NOT NULL DEFAULT '',
+  company        TEXT NOT NULL DEFAULT '',
+  type           TEXT NOT NULL DEFAULT 'Full-time',
+  vertical       TEXT NOT NULL DEFAULT 'IT & Software',
+  salary         TEXT NOT NULL DEFAULT '',
+  description    TEXT NOT NULL DEFAULT '',
+  recruiter_id   TEXT NOT NULL DEFAULT '',
+  recruiter_name TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS site_content (
@@ -61,17 +63,19 @@ CREATE TABLE IF NOT EXISTS admin_users (
 );
 
 CREATE TABLE IF NOT EXISTS applications (
-  id          TEXT        PRIMARY KEY,
-  job_id      TEXT        NOT NULL,
-  job_title   TEXT        NOT NULL DEFAULT '',
-  first_name  TEXT        NOT NULL DEFAULT '',
-  last_name   TEXT        NOT NULL DEFAULT '',
-  email       TEXT        NOT NULL DEFAULT '',
-  phone       TEXT        NOT NULL DEFAULT '',
-  cover_letter TEXT       NOT NULL DEFAULT '',
-  cv_url      TEXT        NOT NULL DEFAULT '',
-  status      TEXT        NOT NULL DEFAULT 'new',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id             TEXT        PRIMARY KEY,
+  job_id         TEXT        NOT NULL,
+  job_title      TEXT        NOT NULL DEFAULT '',
+  first_name     TEXT        NOT NULL DEFAULT '',
+  last_name      TEXT        NOT NULL DEFAULT '',
+  email          TEXT        NOT NULL DEFAULT '',
+  phone          TEXT        NOT NULL DEFAULT '',
+  cover_letter   TEXT        NOT NULL DEFAULT '',
+  cv_url         TEXT        NOT NULL DEFAULT '',
+  status         TEXT        NOT NULL DEFAULT 'new',
+  recruiter_id   TEXT        NOT NULL DEFAULT '',
+  recruiter_name TEXT        NOT NULL DEFAULT '',
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ── Row Level Security ─────────────────────────────────────────────────────────
@@ -170,3 +174,13 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO admin_users (id, email, name, role, password_hash, active, created_at) VALUES
 ('1776879825599','muhammadosamakhan19@gmail.com','Osama Khan','editor','32d03285db7d7992f5c02f323144c9a1fe6630c1b32b3aa194e621574a05b767',true,'2026-04-22T17:43:45.599Z')
 ON CONFLICT (id) DO NOTHING;
+
+-- ── Add recruiter columns to existing deployments (safe to run on existing DB) ──
+
+ALTER TABLE jobs
+  ADD COLUMN IF NOT EXISTS recruiter_id   TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS recruiter_name TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE applications
+  ADD COLUMN IF NOT EXISTS recruiter_id   TEXT NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS recruiter_name TEXT NOT NULL DEFAULT '';

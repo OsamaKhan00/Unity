@@ -95,20 +95,12 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <>
-              <Link
-                href="/login"
-                className="hidden sm:block text-sm font-medium text-gray-600 hover:text-brand-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/register"
-                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition"
-              >
-                Get Started
-              </Link>
-            </>
+            <Link
+              href="/register"
+              className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition"
+            >
+              Get Started
+            </Link>
           )}
 
           {/* Mobile hamburger */}
@@ -156,14 +148,9 @@ export default function Navbar() {
                 </button>
               </>
             ) : (
-              <>
-                <Link href="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                  Sign in
-                </Link>
-                <Link href="/register" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition">
-                  Register
-                </Link>
-              </>
+              <Link href="/register" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition">
+                Get Started
+              </Link>
             )}
           </div>
         </div>

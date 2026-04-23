@@ -18,6 +18,14 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createAdminClient();
+
+  // Look up the job to get the assigned recruiter
+  const { data: jobData } = await supabase
+    .from('jobs')
+    .select('recruiter_id, recruiter_name')
+    .eq('id', jobId)
+    .single();
+
   const id = Date.now().toString();
   let cv_url = '';
 
@@ -49,6 +57,8 @@ export async function POST(req: NextRequest) {
     cover_letter: coverLetter,
     cv_url,
     status: 'new',
+    recruiter_id: jobData?.recruiter_id ?? '',
+    recruiter_name: jobData?.recruiter_name ?? '',
   });
 
   if (error) {

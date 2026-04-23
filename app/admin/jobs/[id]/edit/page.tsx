@@ -11,6 +11,8 @@ interface Job {
   vertical: string;
   salary: string;
   description: string;
+  recruiter_id: string;
+  recruiter_name: string;
 }
 
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface JobFormData {
@@ -9,11 +9,20 @@ interface JobFormData {
   vertical: string;
   salary: string;
   description: string;
+  recruiter_id: string;
+  recruiter_name: string;
+}
+
+interface Recruiter {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
 }
 
 interface Props {
   jobId?: string;
-  initialData?: JobFormData;
+  initialData?: Partial<JobFormData>;
 }
 
 const defaultForm: JobFormData = {
@@ -23,16 +32,35 @@ const defaultForm: JobFormData = {
   vertical: 'IT & Software',
   salary: '',
   description: '',
+  recruiter_id: '',
+  recruiter_name: '',
 };
 
 export default function JobForm({ jobId, initialData }: Props) {
   const router = useRouter();
-  const [form, setForm] = useState<JobFormData>(initialData ?? defaultForm);
+  const [form, setForm] = useState<JobFormData>({ ...defaultForm, ...initialData });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [recruiters, setRecruiters] = useState<Recruiter[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/recruiters')
+      .then(r => r.ok ? r.json() : [])
+      .then(setRecruiters)
+      .catch(() => {});
+  }, []);
 
   function set(field: keyof JobFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleRecruiterChange(recruiterId: string) {
+    const recruiter = recruiters.find(r => r.id === recruiterId);
+    setForm(prev => ({
+      ...prev,
+      recruiter_id: recruiterId,
+      recruiter_name: recruiter?.name ?? '',
+    }));
   }
 
   async function handleSubmit(e: { preventDefault(): void }) {
@@ -132,6 +160,24 @@ export default function JobForm({ jobId, initialData }: Props) {
           className={inputClass}
           placeholder="e.g. $130K–$170K or $90–$110/hr"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Assigned Recruiter
+        </label>
+        <select
+          value={form.recruiter_id}
+          onChange={(e) => handleRecruiterChange(e.target.value)}
+          className={inputClass}
+        >
+          <option value="">— Unassigned —</option>
+          {recruiters.map(r => (
+            <option key={r.id} value={r.id}>
+              {r.name} ({r.role})
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

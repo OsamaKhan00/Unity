@@ -12,7 +12,22 @@ interface Application {
   cover_letter: string;
   cv_url: string;
   status: string;
+  recruiter_id: string;
+  recruiter_name: string;
   created_at: string;
+}
+
+interface Recruiter {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AdminMe {
+  email: string;
+  role: string;
+  name: string;
 }
 
 const STATUSES = ['new', 'reviewed', 'shortlisted', 'rejected'];
@@ -29,8 +44,17 @@ export default function AdminApplicationsPage() {
   const [loading, setLoading]           = useState(true);
   const [expanded, setExpanded]         = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
+  const [recruiters, setRecruiters]     = useState<Recruiter[]>([]);
+  const [me, setMe]                     = useState<AdminMe | null>(null);
 
-  useEffect(() => { fetchApplications(); }, []);
+  useEffect(() => {
+    Promise.all([
+      fetchApplications(),
+      fetch('/api/admin/me').then(r => r.ok ? r.json() : null).then(setMe),
+      fetch('/api/admin/recruiters').then(r => r.ok ? r.json() : []).then(setRecruiters),
+    ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function fetchApplications() {
     const r = await fetch('/api/admin/applications');
@@ -47,6 +71,18 @@ export default function AdminApplicationsPage() {
     });
   }
 
+  async function handleRecruiterChange(id: string, recruiterId: string) {
+    const recruiter = recruiters.find(r => r.id === recruiterId);
+    setApplications(prev => prev.map(a =>
+      a.id === id ? { ...a, recruiter_id: recruiterId, recruiter_name: recruiter?.name ?? '' } : a
+    ));
+    await fetch(`/api/admin/applications/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recruiter_id: recruiterId, recruiter_name: recruiter?.name ?? '' }),
+    });
+  }
+
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Delete application from ${name}?`)) return;
     setDeleting(id);
@@ -54,6 +90,8 @@ export default function AdminApplicationsPage() {
     setApplications(prev => prev.filter(a => a.id !== id));
     setDeleting(null);
   }
+
+  const canReassign = me?.role === 'super_admin' || me?.role === 'admin';
 
   if (loading) {
     return <div className="p-6 text-sm text-gray-500">Loading applications…</div>;
@@ -63,7 +101,10 @@ export default function AdminApplicationsPage() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-gray-900">Applications</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{applications.length} total submission{applications.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          {applications.length} total submission{applications.length !== 1 ? 's' : ''}
+          {!canReassign && me && ` · Showing applications assigned to you`}
+        </p>
       </div>
 
       {applications.length === 0 ? (
@@ -75,7 +116,7 @@ export default function AdminApplicationsPage() {
           {applications.map(app => (
             <div key={app.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               {/* Row */}
-              <div className="flex items-center gap-4 px-5 py-4">
+              <div className="flex items-center gap-4 px-5 py-4 flex-wrap">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900">
                     {app.first_name} {app.last_name}
@@ -86,6 +127,24 @@ export default function AdminApplicationsPage() {
                 <div className="hidden sm:block text-xs text-gray-600 min-w-0 max-w-[180px] truncate">
                   {app.job_title}
                 </div>
+
+                {/* Recruiter assignment */}
+                {canReassign ? (
+                  <select
+                    value={app.recruiter_id}
+                    onChange={e => handleRecruiterChange(app.id, e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  >
+                    <option value="">— Unassigned —</option>
+                    {recruiters.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-gray-500 shrink-0">
+                    {app.recruiter_name || 'Unassigned'}
+                  </span>
+                )}
 
                 <div className="text-xs text-gray-400 shrink-0">
                   {new Date(app.created_at).toLocaleDateString()}

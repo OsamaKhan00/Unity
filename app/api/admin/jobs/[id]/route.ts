@@ -20,6 +20,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       vertical: body.vertical,
       salary: body.salary,
       description: body.description,
+      recruiter_id: body.recruiter_id ?? '',
+      recruiter_name: body.recruiter_name ?? '',
     }).eq('id', id).select().single();
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(data);
