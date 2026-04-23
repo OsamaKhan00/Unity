@@ -4,11 +4,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
-type Mode = 'candidate' | 'employee';
-
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('candidate');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,61 +17,17 @@ export default function LoginPage() {
     setError('');
 
     try {
-      if (mode === 'employee') {
-        // Try admin credentials first
-        const adminRes = await fetch('/api/admin/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (adminRes.ok) {
-          router.push('/admin');
-          return;
-        }
-
-        // Try Supabase as internal employee
-        const supabase = createClient();
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (authError) {
-          setError('Invalid email or password.');
-          setLoading(false);
-          return;
-        }
-
-        const role = data.user?.user_metadata?.role;
-        if (role !== 'employee') {
-          await supabase.auth.signOut();
-          setError('This login is for internal employees only. Job seekers please use the Job Seeker tab.');
-          setLoading(false);
-          return;
-        }
-
-        router.push('/profile');
-        router.refresh();
-      } else {
-        // Job Seeker — Supabase only
-        const supabase = createClient();
-        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (authError) {
-          setError('Invalid email or password.');
-          setLoading(false);
-          return;
-        }
-
-        const role = data.user?.user_metadata?.role;
-        if (role === 'employee') {
-          await supabase.auth.signOut();
-          setError('This account belongs to an internal employee. Please use the Internal Employee tab.');
-          setLoading(false);
-          return;
-        }
-
-        router.push('/profile');
-        router.refresh();
+      if (authError) {
+        setError('Invalid email or password.');
+        setLoading(false);
+        return;
       }
+
+      router.push('/profile');
+      router.refresh();
     } catch {
       setError('Unable to connect. Please check your internet connection or try again later.');
       setLoading(false);
@@ -95,28 +48,7 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mt-1">Sign in to your Apex Talent Group account</p>
         </div>
 
-        {/* Mode toggle */}
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-          {(['candidate', 'employee'] as Mode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition capitalize ${
-                mode === m ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {m === 'candidate' ? 'Job Seeker' : 'Internal Employee'}
-            </button>
-          ))}
-        </div>
-
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          {mode === 'employee' && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-5 text-sm text-blue-700">
-              Use your company-issued email to sign in as an internal employee.
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
