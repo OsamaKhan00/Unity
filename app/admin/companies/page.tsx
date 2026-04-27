@@ -11,6 +11,7 @@ interface Job {
   vertical: string;
   salary: string;
   status: string;
+  recruiter_name: string;
 }
 
 const verticalColors: Record<string, string> = {
@@ -156,7 +157,7 @@ export default function CompaniesPage() {
                     <table className="w-full">
                       <thead className="bg-gray-50">
                         <tr>
-                          {['Position', 'Location', 'Status', 'Type', 'Vertical', 'Salary', ''].map(h => (
+                          {['Position', 'Recruiter', 'Location', 'Status', 'Type', 'Vertical', 'Salary', ''].map(h => (
                             <th key={h} className="px-5 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider last:text-right">{h}</th>
                           ))}
                         </tr>
@@ -166,7 +167,10 @@ export default function CompaniesPage() {
                           const sm = statusMeta[job.status || 'active'] ?? statusMeta.active;
                           return (
                             <tr key={job.id} className="hover:bg-gray-50 transition">
-                              <td className="px-5 py-3 text-sm font-medium text-gray-900">{job.title}</td>
+                              <td className="px-5 py-3 text-sm font-medium text-gray-900">
+                                <Link href={`/admin/jobs/${job.id}`} className="hover:text-brand-700 transition">{job.title}</Link>
+                              </td>
+                              <td className="px-5 py-3 text-sm text-gray-500">{job.recruiter_name || <span className="text-gray-300">—</span>}</td>
                               <td className="px-5 py-3 text-sm text-gray-500">{job.location || '—'}</td>
                               <td className="px-5 py-3">
                                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sm.cls}`}>{sm.label}</span>
@@ -179,7 +183,10 @@ export default function CompaniesPage() {
                               </td>
                               <td className="px-5 py-3 text-sm text-gray-600">{job.salary}</td>
                               <td className="px-5 py-3 text-right">
-                                <Link href={`/admin/jobs/${job.id}/edit`} className="text-xs text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
+                                <div className="flex items-center justify-end gap-3">
+                                  <Link href={`/admin/jobs/${job.id}`} className="text-xs text-gray-500 hover:text-gray-700 font-medium">View</Link>
+                                  <Link href={`/admin/jobs/${job.id}/edit`} className="text-xs text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
+                                </div>
                               </td>
                             </tr>
                           );

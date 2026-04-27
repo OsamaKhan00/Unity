@@ -16,6 +16,13 @@ interface SavedApplication {
   coverLetter: string;
 }
 
+interface GuestApplicationEntry extends SavedApplication {
+  jobId: string;
+  jobTitle: string;
+  status: string;
+  submittedAt: string;
+}
+
 function getSavedApplication(jobId: string): SavedApplication | null {
   try {
     const stored = localStorage.getItem('appliedJobs');
@@ -27,12 +34,31 @@ function getSavedApplication(jobId: string): SavedApplication | null {
   }
 }
 
-function saveApplication(jobId: string, data: SavedApplication) {
+function saveApplication(jobId: string, jobTitle: string, data: SavedApplication) {
   try {
+    // Per-job lookup (used by ApplyForm to detect already-applied state)
     const stored = localStorage.getItem('appliedJobs');
     const parsed = stored ? JSON.parse(stored) : {};
     parsed[jobId] = data;
     localStorage.setItem('appliedJobs', JSON.stringify(parsed));
+
+    // Global list used by My Applications page
+    const listStored = localStorage.getItem('guestApplications');
+    const list: GuestApplicationEntry[] = listStored ? JSON.parse(listStored) : [];
+    const entry: GuestApplicationEntry = {
+      ...data,
+      jobId,
+      jobTitle,
+      status: 'new',
+      submittedAt: new Date().toISOString(),
+    };
+    const idx = list.findIndex(a => a.applicationId === data.applicationId);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...entry };
+    } else {
+      list.unshift(entry);
+    }
+    localStorage.setItem('guestApplications', JSON.stringify(list));
   } catch {
     // ignore storage errors
   }
@@ -72,8 +98,6 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
     }
 
     const json = await res.json();
-    // The POST endpoint doesn't return an ID, so we generate one the same way it does
-    // Store the form data so edit mode works
     const appData: SavedApplication = {
       applicationId: json.id ?? Date.now().toString(),
       firstName: data.get('firstName') as string,
@@ -82,7 +106,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
       phone: (data.get('phone') as string) ?? '',
       coverLetter: (data.get('coverLetter') as string) ?? '',
     };
-    saveApplication(jobId, appData);
+    saveApplication(jobId, jobTitle, appData);
     setSaved(appData);
   }
 
@@ -116,7 +140,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
       phone: (data.get('phone') as string) ?? '',
       coverLetter: (data.get('coverLetter') as string) ?? '',
     };
-    saveApplication(jobId, updatedApp);
+    saveApplication(jobId, jobTitle, updatedApp);
     setSaved(updatedApp);
     setEditing(false);
     setUpdateSuccess(true);
@@ -175,6 +199,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
         </div>
 
         <form onSubmit={handleUpdate} className="space-y-5">
+          <input type="hidden" name="verifyEmail" value={saved.email} />
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>

@@ -11,6 +11,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const phone       = (formData.get('phone') as string) ?? '';
   const coverLetter = (formData.get('coverLetter') as string) ?? '';
   const cvFile      = formData.get('cv') as File | null;
+  const verifyEmail = (formData.get('verifyEmail') as string)?.toLowerCase().trim();
 
   if (!firstName || !lastName || !email) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -18,15 +19,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const supabase = createAdminClient();
 
-  // Verify the application exists before updating
+  // Verify the application exists and the requester owns it
   const { data: existing, error: fetchError } = await supabase
     .from('applications')
-    .select('id, cv_url')
+    .select('id, cv_url, email')
     .eq('id', id)
     .single();
 
   if (fetchError || !existing) {
     return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+  }
+
+  if (verifyEmail && existing.email.toLowerCase() !== verifyEmail) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
   const updates: Record<string, string> = {

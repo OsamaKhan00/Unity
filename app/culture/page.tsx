@@ -34,51 +34,61 @@ const environment = [
 
 export default function CulturePage() {
   return (
-    <div className="max-w-5xl mx-auto py-14 px-6">
-      <div className="text-center mb-14">
-        <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-3">Our Culture</p>
-        <h1 className="text-4xl font-bold mb-4">How We Work — and Why It Matters</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Culture isn't a mission statement on the wall. It's how we make decisions when no one's watching,
-          how we treat people when it's inconvenient, and what we refuse to compromise on.
-        </p>
-      </div>
-
-      {/* Culture pillars */}
-      <div className="grid sm:grid-cols-2 gap-6 mb-16">
-        {pillars.map((p) => (
-          <div key={p.title} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <h3 className="font-semibold text-brand-700 text-lg mb-2">{p.title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{p.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Environment */}
-      <div className="bg-brand-900 text-white rounded-2xl p-10 mb-14">
-        <h2 className="text-2xl font-bold text-center mb-8">Our Work Environment</h2>
-        <div className="grid sm:grid-cols-2 gap-6">
-          {environment.map((e) => (
-            <div key={e.label} className="flex gap-4 items-start">
-              <span className="text-blue-300 text-lg mt-0.5">✓</span>
-              <div>
-                <p className="font-semibold">{e.label}</p>
-                <p className="text-blue-200 text-sm">{e.detail}</p>
-              </div>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-brand-900 text-white py-20 px-6">
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle,#fff 1px,transparent 1px)', backgroundSize: '36px 36px' }} />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <p className="text-xs font-semibold text-blue-300 uppercase tracking-widest mb-3">Our Culture</p>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight">How We Work — and Why It Matters</h1>
+          <p className="text-blue-200 max-w-2xl mx-auto text-lg">
+            Culture isn&apos;t a mission statement on the wall. It&apos;s how we make decisions when no one&apos;s watching
+            and what we refuse to compromise on.
+          </p>
         </div>
       </div>
 
-      {/* Founder note */}
-      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8">
-        <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-4">A Word From Our Founder</p>
-        <blockquote className="text-gray-700 leading-relaxed text-lg italic mb-4">
-          "I've spent over two decades watching what happens when the right person is placed in the right environment —
-          and what happens when they aren't. The difference is enormous. Everything we do at Apex is about
-          getting that right. Not most of the time. Every time."
-        </blockquote>
-        <p className="text-sm font-semibold text-gray-900">— Naeem Malik, Founder & Managing Director</p>
+      <div className="max-w-5xl mx-auto py-14 px-6">
+        {/* Culture pillars */}
+        <div className="grid sm:grid-cols-2 gap-6 mb-16">
+          {pillars.map((p) => (
+            <div key={p.title} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+              <h3 className="font-semibold text-brand-700 text-lg mb-2">{p.title}</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Environment */}
+        <div className="bg-brand-900 text-white rounded-2xl p-10 mb-14">
+          <h2 className="text-2xl font-bold text-center mb-8">Our Work Environment</h2>
+          <div className="grid sm:grid-cols-2 gap-6">
+            {environment.map((e) => (
+              <div key={e.label} className="flex gap-4 items-start">
+                <div className="w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold">{e.label}</p>
+                  <p className="text-blue-200 text-sm mt-0.5">{e.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Founder note */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-4">A Word From Our Founder</p>
+          <blockquote className="text-gray-700 leading-relaxed text-lg italic mb-4">
+            &ldquo;I&apos;ve spent over two decades watching what happens when the right person is placed in the right environment —
+            and what happens when they aren&apos;t. The difference is enormous. Everything we do at Apex is about
+            getting that right. Not most of the time. Every time.&rdquo;
+          </blockquote>
+          <p className="text-sm font-semibold text-gray-900">— Naeem Malik, Founder & Managing Director</p>
+        </div>
       </div>
     </div>
   );

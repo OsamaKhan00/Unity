@@ -81,10 +81,10 @@ export default async function HomePage() {
       </section>
 
       {/* ── Stats ── */}
-      <section className="bg-brand-700 text-white py-12 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-          {content.stats.map((s) => (
-            <div key={s.label}>
+      <section className="bg-brand-700 text-white py-14 px-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 text-center">
+          {content.stats.map((s, i) => (
+            <div key={s.label} className={`px-6 py-4 ${i > 0 ? 'sm:border-l border-white/10' : ''}`}>
               <p className="text-4xl font-extrabold tracking-tight">{s.value}</p>
               <p className="text-blue-200 text-sm mt-1.5 leading-snug">{s.label}</p>
             </div>
@@ -95,10 +95,13 @@ export default async function HomePage() {
       {/* ── Mission ── */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-4">Our Mission</p>
-          <blockquote className="text-xl sm:text-2xl font-semibold text-gray-800 leading-snug">
-            &ldquo;{content.mission_statement}&rdquo;
-          </blockquote>
+          <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-6">Our Mission</p>
+          <div className="relative">
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-7xl text-brand-100 font-serif leading-none select-none pointer-events-none">&ldquo;</span>
+            <blockquote className="relative text-xl sm:text-2xl font-semibold text-gray-800 leading-relaxed">
+              {content.mission_statement}
+            </blockquote>
+          </div>
         </div>
       </section>
 

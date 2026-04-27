@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 interface Job {
   id: string; title: string; company: string; location: string; type: string;
-  vertical: string; salary: string; status: string;
+  vertical: string; salary: string; status: string; recruiter_name: string;
 }
 
 const verticalColors: Record<string, string> = {
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Position & Company', 'Status', 'Type', 'Vertical', 'Salary', ''].map(h => (
+                  {['Position & Company', 'Recruiter', 'Status', 'Type', 'Vertical', 'Salary', ''].map(h => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider last:text-right">{h}</th>
                   ))}
                 </tr>
@@ -160,9 +160,10 @@ export default function AdminDashboard() {
                   return (
                     <tr key={job.id} className="hover:bg-gray-50 transition">
                       <td className="px-5 py-4">
-                        <p className="font-medium text-gray-900 text-sm">{job.title}</p>
+                        <Link href={`/admin/jobs/${job.id}`} className="font-medium text-gray-900 text-sm hover:text-brand-700 transition">{job.title}</Link>
                         <p className="text-xs text-gray-400 mt-0.5">{job.company}{job.location ? ` · ${job.location}` : ''}</p>
                       </td>
+                      <td className="px-5 py-4 text-sm text-gray-600">{job.recruiter_name || <span className="text-gray-300">—</span>}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${sm.cls}`}>{sm.label}</span>
                       </td>
@@ -175,6 +176,7 @@ export default function AdminDashboard() {
                       <td className="px-5 py-4 text-sm text-gray-700">{job.salary}</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
+                          <Link href={`/admin/jobs/${job.id}`} className="text-sm text-gray-500 hover:text-gray-700 font-medium">View</Link>
                           <Link href={`/admin/jobs/${job.id}/edit`} className="text-sm text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
                           <button onClick={() => deleteJob(job.id, job.title)} disabled={deleting === job.id} className="text-sm text-red-500 hover:text-red-700 font-medium disabled:opacity-50">
                             {deleting === job.id ? '…' : 'Delete'}

@@ -99,15 +99,7 @@ CREATE POLICY "public_read" ON site_content FOR SELECT USING (true);
 CREATE POLICY "public_insert" ON applications FOR INSERT WITH CHECK (true);
 
 -- ── Seed: people ───────────────────────────────────────────────────────────────
-
-INSERT INTO people (id, name, title, area, bio, image_url, linkedin, "order", active) VALUES
-('1','Naeem Malik','Founder & Managing Director','All Verticals','With over 20 years of experience in technical staffing and workforce solutions, Naeem has built his career — and his reputation — in one of the most competitive talent markets in the world: the Seattle metropolitan area. Having developed vendor relationships with Microsoft, Amazon, and Expedia, he brings unmatched insight into what the best companies actually need from their people. Over his career, Naeem has opened doors for hundreds of talented professionals, ensuring that ambition is never blocked by a lack of opportunity.','','',1,true),
-('2','Sarah Khalil','Senior Technical Recruiter','IT & Software','Sarah specializes in placing software engineers, cloud architects, and DevOps professionals at high-growth technology companies. With a background in computer science, she bridges the gap between technical requirements and human potential. Placed 80+ engineers in the past four years alone.','','',2,true),
-('3','Marcus Williams','Lead Recruiter — Infrastructure','Data Center','Marcus brings a decade of experience in critical infrastructure staffing. From commissioning engineers to MEP project managers, he has an instinct for finding the specialists that data center projects depend on. Built and staffed commissioning teams for three hyperscale data center projects in the Pacific Northwest.','','',3,true),
-('4','Priya Kapoor','Pharma & Life Sciences Specialist','Pharmaceutical','Priya''s expertise lies at the intersection of regulatory compliance and talent. She places C&Q engineers, validation specialists, and GMP professionals with pharmaceutical and biotech firms across the country. Has supported validation teams on FDA-regulated facility launches.','','',4,true),
-('5','Jordan Hayes','Talent Acquisition Partner','Candidate Relations','Jordan manages candidate relationships from first contact through successful placement. Known for a personable approach and sharp eye for cultural fit, Jordan ensures that every hire is the right hire — for both sides.','','',5,true),
-('6','Emily Torres','Operations & Client Success','Operations','Emily keeps every engagement running smoothly — from contract compliance to client communication. She is the backbone of operational excellence at Apex, ensuring that both clients and candidates always have a point of contact they can rely on.','','',6,true)
-ON CONFLICT (id) DO NOTHING;
+-- People are managed via the admin panel at /admin/people — no seed data.
 
 -- ── Seed: projects ─────────────────────────────────────────────────────────────
 

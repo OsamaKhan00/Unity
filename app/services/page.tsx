@@ -55,55 +55,61 @@ const services = [
 
 export default function ServicesPage() {
   return (
-    <div className="max-w-5xl mx-auto py-14 px-6">
-      <div className="text-center mb-14">
-        <p className="text-xs font-semibold text-brand-600 uppercase tracking-widest mb-3">What We Offer</p>
-        <h1 className="text-4xl font-bold mb-4">Our Services</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          We specialize in three high-demand, technically complex verticals. This focus lets us
-          go deeper — not broader — so every candidate we present is genuinely qualified.
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-brand-900 text-white py-20 px-6">
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle,#fff 1px,transparent 1px)', backgroundSize: '36px 36px' }} />
+        <div className="relative z-10 max-w-4xl mx-auto text-center">
+          <p className="text-xs font-semibold text-blue-300 uppercase tracking-widest mb-3">What We Offer</p>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight">Our Services</h1>
+          <p className="text-blue-200 max-w-2xl mx-auto text-lg">
+            We specialize in three high-demand, technically complex verticals. This focus lets us
+            go deeper — not broader — so every candidate we present is genuinely qualified.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-14">
-        {services.map((s) => (
-          <div key={s.id} id={s.id} className="scroll-mt-20">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-brand-900 px-8 py-6">
-                <h2 className="text-xl font-bold text-white">{s.title}</h2>
-              </div>
-              <div className="px-8 py-7">
-                <p className="text-gray-600 leading-relaxed mb-7">{s.description}</p>
-                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-                  Positions We Recruit For
-                </h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {s.positions.map((p) => (
-                    <div key={p.title} className="flex items-start gap-2 bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
-                      <span className="text-brand-600 mt-0.5 text-xs">●</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{p.title}</p>
-                        <p className="text-xs text-gray-500">{p.note}</p>
+      <div className="max-w-5xl mx-auto py-14 px-6">
+        <div className="space-y-14">
+          {services.map((s) => (
+            <div key={s.id} id={s.id} className="scroll-mt-20">
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-brand-900 px-8 py-6">
+                  <h2 className="text-xl font-bold text-white">{s.title}</h2>
+                </div>
+                <div className="px-8 py-7">
+                  <p className="text-gray-600 leading-relaxed mb-7">{s.description}</p>
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
+                    Positions We Recruit For
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {s.positions.map((p) => (
+                      <div key={p.title} className="flex items-start gap-2 bg-gray-50 rounded-lg px-4 py-3 border border-gray-100">
+                        <span className="text-brand-600 mt-0.5 text-xs">●</span>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{p.title}</p>
+                          <p className="text-xs text-gray-500">{p.note}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* CTA */}
-      <div className="mt-14 bg-brand-600 text-white rounded-2xl p-10 text-center">
-        <h2 className="text-xl font-bold mb-2">Looking to hire in one of these areas?</h2>
-        <p className="text-blue-100 mb-6">Tell us what you need and we'll get to work.</p>
-        <Link
-          href="/contact"
-          className="bg-white text-brand-700 font-semibold px-7 py-3 rounded-lg hover:bg-blue-50 transition"
-        >
-          Get in Touch
-        </Link>
+        {/* CTA */}
+        <div className="mt-14 bg-brand-600 text-white rounded-2xl p-10 text-center">
+          <h2 className="text-xl font-bold mb-2">Looking to hire in one of these areas?</h2>
+          <p className="text-blue-100 mb-6">Tell us what you need and we'll get to work.</p>
+          <Link
+            href="/contact"
+            className="bg-white text-brand-700 font-semibold px-7 py-3 rounded-lg hover:bg-blue-50 transition"
+          >
+            Get in Touch
+          </Link>
+        </div>
       </div>
     </div>
   );

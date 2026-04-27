@@ -16,14 +16,20 @@ export async function GET(request: Request) {
 
   const isSuperAdmin = session.role === 'super_admin' || session.email === process.env.ADMIN_EMAIL;
   const isAdmin = session.role === 'admin';
+  const isEditor = session.role === 'editor';
+
+  const jobId = new URL(request.url).searchParams.get('jobId');
 
   let query = createAdminClient()
     .from('applications')
     .select('*')
     .order('created_at', { ascending: false });
 
-  // Viewers only see their own assigned applications
-  const isEditor = session.role === 'editor';
+  if (jobId) {
+    query = query.eq('job_id', jobId);
+  }
+
+  // Non-admin roles only see their own assigned applications
   if (!isSuperAdmin && !isAdmin && !isEditor) {
     const { data: recruiterRow } = await createAdminClient()
       .from('admin_users')

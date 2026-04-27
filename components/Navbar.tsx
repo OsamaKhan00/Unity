@@ -21,6 +21,13 @@ export default function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     try {
@@ -50,26 +57,36 @@ export default function Navbar() {
     : user?.email?.slice(0, 2).toUpperCase() ?? '';
 
   return (
-    <nav className="bg-white/95 backdrop-blur border-b border-gray-200 sticky top-0 z-50">
+    <nav className={`bg-white/95 backdrop-blur sticky top-0 z-50 border-b border-gray-200 transition-shadow duration-200 ${scrolled ? 'shadow-md' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" className="text-xl font-bold text-brand-700 shrink-0 tracking-tight">
-          Apex Talent Group
+        <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+          <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center shadow-sm group-hover:bg-brand-700 transition-colors">
+            <span className="text-white font-bold text-sm tracking-tight">A</span>
+          </div>
+          <span className="text-[1.05rem] font-bold tracking-tight text-gray-900">
+            Apex <span className="text-brand-600">Talent Group</span>
+          </span>
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-600">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`whitespace-nowrap hover:text-brand-700 transition-colors ${
-                pathname === l.href ? 'text-brand-700 font-semibold' : ''
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+        <div className="hidden lg:flex items-center gap-0.5 text-sm font-medium text-gray-600">
+          {links.map((l) => {
+            const active = pathname === l.href;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
+                  active
+                    ? 'text-brand-700 font-semibold bg-brand-50'
+                    : 'hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Right: auth + CTA */}
@@ -97,14 +114,20 @@ export default function Navbar() {
           ) : (
             <>
               <Link
+                href="/my-applications"
+                className="hidden sm:block text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
+              >
+                My Applications
+              </Link>
+              <Link
                 href="/login"
-                className="hidden sm:block text-sm font-medium text-gray-600 hover:text-brand-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
+                className="hidden sm:block text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition"
+                className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm"
               >
                 Get Started
               </Link>
@@ -157,6 +180,9 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <Link href="/my-applications" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-medium text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-50 transition">
+                  My Applications
+                </Link>
                 <Link href="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                   Sign in
                 </Link>
