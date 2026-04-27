@@ -39,10 +39,12 @@ CREATE TABLE IF NOT EXISTS jobs (
   id             TEXT PRIMARY KEY,
   title          TEXT NOT NULL DEFAULT '',
   company        TEXT NOT NULL DEFAULT '',
+  location       TEXT NOT NULL DEFAULT '',
   type           TEXT NOT NULL DEFAULT 'Full-time',
   vertical       TEXT NOT NULL DEFAULT 'IT & Software',
   salary         TEXT NOT NULL DEFAULT '',
   description    TEXT NOT NULL DEFAULT '',
+  status         TEXT NOT NULL DEFAULT 'active',
   recruiter_id   TEXT NOT NULL DEFAULT '',
   recruiter_name TEXT NOT NULL DEFAULT ''
 );
@@ -184,3 +186,9 @@ ALTER TABLE jobs
 ALTER TABLE applications
   ADD COLUMN IF NOT EXISTS recruiter_id   TEXT NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS recruiter_name TEXT NOT NULL DEFAULT '';
+
+-- ── Add status and location columns to existing deployments (safe to run on existing DB) ──
+
+ALTER TABLE jobs
+  ADD COLUMN IF NOT EXISTS status   TEXT NOT NULL DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS location TEXT NOT NULL DEFAULT '';

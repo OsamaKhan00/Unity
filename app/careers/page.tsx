@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 // Jobs are fetched client-side so search/filter works interactively
 interface Job {
-  id: string; title: string; company: string; type: string;
+  id: string; title: string; company: string; location: string; type: string;
   vertical: string; salary: string; description: string;
 }
 
@@ -24,22 +24,31 @@ const TYPES     = ['All', 'Full-time', 'Contract'];
 import { useEffect } from 'react';
 
 export default function CareersPage() {
-  const [jobs, setJobs]       = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery]     = useState('');
-  const [vertical, setVertical] = useState('All');
-  const [type, setType]       = useState('All');
+  const [jobs, setJobs]           = useState<Job[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [query, setQuery]         = useState('');
+  const [vertical, setVertical]   = useState('All');
+  const [type, setType]           = useState('All');
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetch('/api/jobs')
-      .then(r => r.json())
-      .then(data => { setJobs(data); setLoading(false); });
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setJobs(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('appliedJobs');
+      if (stored) setAppliedJobs(new Set(Object.keys(JSON.parse(stored))));
+    } catch { /* ignore */ }
   }, []);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return jobs.filter(j => {
-      const matchQ = !q || j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q) || j.vertical.toLowerCase().includes(q);
+      const matchQ = !q || j.title.toLowerCase().includes(q) || j.vertical.toLowerCase().includes(q);
       const matchV = vertical === 'All' || j.vertical === vertical;
       const matchT = type === 'All' || j.type === type;
       return matchQ && matchV && matchT;
@@ -69,7 +78,7 @@ export default function CareersPage() {
             </svg>
             <input
               type="text"
-              placeholder="Search by title, company, or industry…"
+              placeholder="Search by title or industry…"
               value={query}
               onChange={e => setQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent bg-gray-50 placeholder:text-gray-400"
@@ -147,29 +156,42 @@ export default function CareersPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map(job => (
-              <Link
-                key={job.id}
-                href={`/careers/${job.id}`}
-                className="block bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:border-brand-400 hover:shadow-md transition group"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-gray-900 group-hover:text-brand-700 transition truncate">{job.title}</h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{job.company}</p>
-                    <p className="text-sm font-semibold text-brand-700 mt-1">{job.salary}</p>
+            {filtered.map(job => {
+              const applied = appliedJobs.has(job.id);
+              return (
+                <Link
+                  key={job.id}
+                  href={`/careers/${job.id}`}
+                  className={`block bg-white rounded-xl border shadow-sm p-5 hover:shadow-md transition group ${applied ? 'border-green-300 hover:border-green-400' : 'border-gray-200 hover:border-brand-400'}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="font-semibold text-gray-900 group-hover:text-brand-700 transition truncate">{job.title}</h2>
+                        {applied && (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Applied
+                          </span>
+                        )}
+                      </div>
+                      {job.location && <p className="text-sm text-gray-500 mt-0.5">{job.location}</p>}
+                      <p className="text-sm font-semibold text-brand-700 mt-1">{job.salary}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${verticalColors[job.vertical] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {job.vertical}
+                      </span>
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${typeColors[job.type] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {job.type}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${verticalColors[job.vertical] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {job.vertical}
-                    </span>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${typeColors[job.type] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {job.type}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
 

@@ -24,7 +24,7 @@ export default async function CareerDetailPage({ params }: { params: Promise<{ i
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 mb-8">
         <h1 className="text-2xl font-bold mb-1">{job.title}</h1>
-        <p className="text-gray-500 text-sm mb-1">{job.company}</p>
+        {job.location && <p className="text-gray-500 text-sm mb-1">{job.location}</p>}
         <p className="text-brand-600 font-semibold text-sm mb-4">{job.salary}</p>
         <div className="flex gap-2 mb-6">
           <span className="text-xs font-medium bg-brand-50 text-brand-700 px-3 py-1 rounded-full">{job.type}</span>

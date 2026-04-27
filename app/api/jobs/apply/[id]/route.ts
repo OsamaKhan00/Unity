@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export async function POST(req: NextRequest) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const formData = await req.formData();
 
-  const jobId       = formData.get('jobId') as string;
-  const jobTitle    = formData.get('jobTitle') as string;
   const firstName   = formData.get('firstName') as string;
   const lastName    = formData.get('lastName') as string;
   const email       = formData.get('email') as string;
@@ -13,57 +12,53 @@ export async function POST(req: NextRequest) {
   const coverLetter = (formData.get('coverLetter') as string) ?? '';
   const cvFile      = formData.get('cv') as File | null;
 
-  if (!jobId || !firstName || !lastName || !email) {
+  if (!firstName || !lastName || !email) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
   const supabase = createAdminClient();
 
-  // Look up the job to get the assigned recruiter
-  const { data: jobData } = await supabase
-    .from('jobs')
-    .select('recruiter_id, recruiter_name')
-    .eq('id', jobId)
+  // Verify the application exists before updating
+  const { data: existing, error: fetchError } = await supabase
+    .from('applications')
+    .select('id, cv_url')
+    .eq('id', id)
     .single();
 
-  const id = Date.now().toString();
-  let cv_url = '';
+  if (fetchError || !existing) {
+    return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+  }
+
+  const updates: Record<string, string> = {
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    phone,
+    cover_letter: coverLetter,
+  };
 
   if (cvFile && cvFile.size > 0) {
     const ext = cvFile.name.split('.').pop();
-    const path = `${id}-${firstName}-${lastName}.${ext}`;
+    const path = `${id}-${firstName}-${lastName}-updated.${ext}`;
     const buffer = Buffer.from(await cvFile.arrayBuffer());
 
     const { error: uploadError } = await supabase.storage
       .from('cvs')
-      .upload(path, buffer, { contentType: cvFile.type, upsert: false });
+      .upload(path, buffer, { contentType: cvFile.type, upsert: true });
 
     if (uploadError) {
       return NextResponse.json({ error: 'CV upload failed: ' + uploadError.message }, { status: 500 });
     }
 
     const { data: urlData } = supabase.storage.from('cvs').getPublicUrl(path);
-    cv_url = urlData.publicUrl;
+    updates.cv_url = urlData.publicUrl;
   }
 
-  const { error } = await supabase.from('applications').insert({
-    id,
-    job_id: jobId,
-    job_title: jobTitle,
-    first_name: firstName,
-    last_name: lastName,
-    email,
-    phone,
-    cover_letter: coverLetter,
-    cv_url,
-    status: 'new',
-    recruiter_id: jobData?.recruiter_id ?? '',
-    recruiter_name: jobData?.recruiter_name ?? '',
-  });
+  const { error } = await supabase.from('applications').update(updates).eq('id', id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, id });
+  return NextResponse.json({ success: true });
 }

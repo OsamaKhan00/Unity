@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
 interface Job {
-  id: string; title: string; company: string; type: string;
-  vertical: string; salary: string;
+  id: string; title: string; company: string; location: string; type: string;
+  vertical: string; salary: string; status: string;
 }
 
 const verticalColors: Record<string, string> = {
@@ -13,10 +13,26 @@ const verticalColors: Record<string, string> = {
   'Pharmaceutical': 'bg-emerald-100 text-emerald-700',
 };
 
+const statusMeta: Record<string, { label: string; cls: string }> = {
+  active:  { label: 'Active',   cls: 'bg-green-100 text-green-700' },
+  on_hold: { label: 'On Hold',  cls: 'bg-amber-100 text-amber-700' },
+  closed:  { label: 'Closed',   cls: 'bg-red-100 text-red-600' },
+  draft:   { label: 'Draft',    cls: 'bg-gray-100 text-gray-500' },
+};
+
+const STATUS_TABS = ['All', 'Active', 'On Hold', 'Closed', 'Draft'] as const;
+type StatusTab = typeof STATUS_TABS[number];
+
+function tabToStatusValue(tab: StatusTab): string | null {
+  if (tab === 'All') return null;
+  return tab.toLowerCase().replace(' ', '_');
+}
+
 export default function AdminDashboard() {
-  const [jobs, setJobs]     = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<string|null>(null);
+  const [jobs, setJobs]         = useState<Job[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [statusTab, setStatusTab] = useState<StatusTab>('All');
 
   useEffect(() => { fetchJobs(); }, []);
 
@@ -29,13 +45,22 @@ export default function AdminDashboard() {
   async function deleteJob(id: string, title: string) {
     if (!confirm(`Delete "${title}"?`)) return;
     setDeleting(id);
-    await fetch(`/api/admin/jobs/${id}`, { method:'DELETE' });
-    setJobs(js => js.filter(j=>j.id!==id));
+    await fetch(`/api/admin/jobs/${id}`, { method: 'DELETE' });
+    setJobs(js => js.filter(j => j.id !== id));
     setDeleting(null);
   }
 
-  const verticals = ['IT & Software','Data Center','Pharmaceutical'];
-  const counts = Object.fromEntries(verticals.map(v=>[v, jobs.filter(j=>j.vertical===v).length]));
+  const verticals = ['IT & Software', 'Data Center', 'Pharmaceutical'];
+  const counts = Object.fromEntries(verticals.map(v => [v, jobs.filter(j => j.vertical === v).length]));
+  const statusCounts = Object.fromEntries(
+    Object.keys(statusMeta).map(s => [s, jobs.filter(j => (j.status || 'active') === s).length])
+  );
+
+  const filteredJobs = useMemo(() => {
+    const val = tabToStatusValue(statusTab);
+    if (!val) return jobs;
+    return jobs.filter(j => (j.status || 'active') === val);
+  }, [jobs, statusTab]);
 
   return (
     <div className="p-6">
@@ -53,12 +78,22 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {/* Status summary chips */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        {Object.entries(statusMeta).map(([key, { label, cls }]) => (
+          <div key={key} className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full ${cls}`}>
+            <span>{label}</span>
+            <span className="font-bold">{statusCounts[key] ?? 0}</span>
+          </div>
+        ))}
+      </div>
+
       {/* Quick actions */}
       <div className="grid sm:grid-cols-3 gap-4 mb-8">
         {[
-          { href:'/admin/people',   label:'Manage People',  sub:'Add or edit team members' },
-          { href:'/admin/projects', label:'Manage Projects', sub:'Update case studies & engagements' },
-          { href:'/admin/content',  label:'Edit Site Copy',  sub:'Update headlines, stats & values' },
+          { href: '/admin/people',    label: 'Manage People',   sub: 'Add or edit team members' },
+          { href: '/admin/projects',  label: 'Manage Projects', sub: 'Update case studies & engagements' },
+          { href: '/admin/content',   label: 'Edit Site Copy',  sub: 'Update headlines, stats & values' },
         ].map(q => (
           <Link key={q.href} href={q.href} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-brand-400 hover:shadow-sm transition group">
             <p className="font-semibold text-gray-900 text-sm group-hover:text-brand-700 transition">{q.label}</p>
@@ -76,47 +111,79 @@ export default function AdminDashboard() {
           </Link>
         </div>
 
+        {/* Status filter tabs */}
+        <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-gray-200">
+          {STATUS_TABS.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setStatusTab(tab)}
+              className={`px-3 py-2 text-xs font-medium rounded-t-lg transition -mb-px border-b-2 ${
+                statusTab === tab
+                  ? 'border-brand-600 text-brand-700 bg-brand-50'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {tab}
+              {tab !== 'All' && (
+                <span className="ml-1.5 text-[10px] bg-gray-200 text-gray-600 rounded-full px-1.5 py-0.5">
+                  {statusCounts[tabToStatusValue(tab)!] ?? 0}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div className="px-6 py-16 text-center text-gray-400 text-sm">Loading…</div>
-        ) : jobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <p className="text-gray-500 text-sm mb-3">No job postings yet.</p>
-            <Link href="/admin/jobs/new" className="text-brand-600 text-sm font-medium hover:underline">Create your first posting →</Link>
+            <p className="text-gray-500 text-sm mb-3">
+              {statusTab === 'All' ? 'No job postings yet.' : `No ${statusTab.toLowerCase()} jobs.`}
+            </p>
+            {statusTab === 'All' && (
+              <Link href="/admin/jobs/new" className="text-brand-600 text-sm font-medium hover:underline">Create your first posting →</Link>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  {['Position','Type','Vertical','Salary',''].map(h=>(
+                  {['Position & Company', 'Status', 'Type', 'Vertical', 'Salary', ''].map(h => (
                     <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider last:text-right">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {jobs.map(job => (
-                  <tr key={job.id} className="hover:bg-gray-50 transition">
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-gray-900 text-sm">{job.title}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{job.company}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${job.type==='Full-time'?'bg-brand-50 text-brand-700':'bg-amber-50 text-amber-700'}`}>{job.type}</span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${verticalColors[job.vertical]??'bg-gray-100 text-gray-700'}`}>{job.vertical}</span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-gray-700">{job.salary}</td>
-                    <td className="px-5 py-4 text-right">
-                      <div className="flex items-center justify-end gap-3">
-                        <Link href={`/admin/jobs/${job.id}/edit`} className="text-sm text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
-                        <button onClick={()=>deleteJob(job.id,job.title)} disabled={deleting===job.id} className="text-sm text-red-500 hover:text-red-700 font-medium disabled:opacity-50">
-                          {deleting===job.id?'…':'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredJobs.map(job => {
+                  const sm = statusMeta[job.status || 'active'] ?? statusMeta.active;
+                  return (
+                    <tr key={job.id} className="hover:bg-gray-50 transition">
+                      <td className="px-5 py-4">
+                        <p className="font-medium text-gray-900 text-sm">{job.title}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{job.company}{job.location ? ` · ${job.location}` : ''}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${sm.cls}`}>{sm.label}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${job.type === 'Full-time' ? 'bg-brand-50 text-brand-700' : 'bg-amber-50 text-amber-700'}`}>{job.type}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${verticalColors[job.vertical] ?? 'bg-gray-100 text-gray-700'}`}>{job.vertical}</span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-gray-700">{job.salary}</td>
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-3">
+                          <Link href={`/admin/jobs/${job.id}/edit`} className="text-sm text-brand-600 hover:text-brand-700 font-medium">Edit</Link>
+                          <button onClick={() => deleteJob(job.id, job.title)} disabled={deleting === job.id} className="text-sm text-red-500 hover:text-red-700 font-medium disabled:opacity-50">
+                            {deleting === job.id ? '…' : 'Delete'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

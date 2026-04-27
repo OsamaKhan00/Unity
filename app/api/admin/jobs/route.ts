@@ -15,10 +15,12 @@ export async function POST(request: Request) {
     id: Date.now().toString(),
     title: String(body.title ?? ''),
     company: String(body.company ?? ''),
+    location: String(body.location ?? ''),
     type: String(body.type ?? 'Full-time'),
     vertical: String(body.vertical ?? 'IT & Software'),
     salary: String(body.salary ?? ''),
     description: String(body.description ?? ''),
+    status: String(body.status ?? 'active'),
     recruiter_id: String(body.recruiter_id ?? ''),
     recruiter_name: String(body.recruiter_name ?? ''),
   };

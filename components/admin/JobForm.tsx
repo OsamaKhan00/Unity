@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 interface JobFormData {
   title: string;
   company: string;
+  location: string;
   type: string;
   vertical: string;
   salary: string;
   description: string;
+  status: string;
   recruiter_id: string;
   recruiter_name: string;
 }
@@ -28,10 +30,12 @@ interface Props {
 const defaultForm: JobFormData = {
   title: '',
   company: '',
+  location: '',
   type: 'Full-time',
   vertical: 'IT & Software',
   salary: '',
   description: '',
+  status: 'active',
   recruiter_id: '',
   recruiter_name: '',
 };
@@ -110,21 +114,31 @@ export default function JobForm({ jobId, initialData }: Props) {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
-          Company / Location
-        </label>
-        <input
-          type="text"
-          required
-          value={form.company}
-          onChange={(e) => set('company', e.target.value)}
-          className={inputClass}
-          placeholder="e.g. Confidential — Seattle, WA"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Company</label>
+          <input
+            type="text"
+            required
+            value={form.company}
+            onChange={(e) => set('company', e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Confidential"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Location</label>
+          <input
+            type="text"
+            value={form.location}
+            onChange={(e) => set('location', e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Seattle, WA or Remote"
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
           <select
@@ -146,6 +160,19 @@ export default function JobForm({ jobId, initialData }: Props) {
             <option>IT &amp; Software</option>
             <option>Data Center</option>
             <option>Pharmaceutical</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Status</label>
+          <select
+            value={form.status}
+            onChange={(e) => set('status', e.target.value)}
+            className={inputClass}
+          >
+            <option value="active">Active</option>
+            <option value="on_hold">On Hold</option>
+            <option value="closed">Closed</option>
+            <option value="draft">Draft</option>
           </select>
         </div>
       </div>

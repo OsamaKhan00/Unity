@@ -16,10 +16,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .from('jobs').update({
       title: body.title,
       company: body.company,
+      location: body.location ?? '',
       type: body.type,
       vertical: body.vertical,
       salary: body.salary,
       description: body.description,
+      status: body.status ?? 'active',
       recruiter_id: body.recruiter_id ?? '',
       recruiter_name: body.recruiter_name ?? '',
     }).eq('id', id).select().single();

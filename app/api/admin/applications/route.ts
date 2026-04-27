@@ -22,8 +22,9 @@ export async function GET(request: Request) {
     .select('*')
     .order('created_at', { ascending: false });
 
-  // Non-admin roles (editor/viewer) only see their own assigned applications
-  if (!isSuperAdmin && !isAdmin) {
+  // Viewers only see their own assigned applications
+  const isEditor = session.role === 'editor';
+  if (!isSuperAdmin && !isAdmin && !isEditor) {
     const { data: recruiterRow } = await createAdminClient()
       .from('admin_users')
       .select('id')
