@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const coverLetter = (formData.get('coverLetter') as string) ?? '';
   const cvFile      = formData.get('cv') as File | null;
 
-  if (!jobId || !firstName || !lastName || !email) {
+  if (!jobId || !firstName || !lastName || !email || !cvFile || cvFile.size === 0) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 

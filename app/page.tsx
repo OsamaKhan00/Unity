@@ -52,7 +52,7 @@ export default async function HomePage() {
           className="object-cover object-center"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-900/92 via-brand-900/85 to-brand-700/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900/75 via-gray-900/60 to-gray-800/50" />
         <div
           className="absolute inset-0 opacity-[0.07]"
           style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '36px 36px' }}

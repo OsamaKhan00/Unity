@@ -202,7 +202,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
           <input type="hidden" name="verifyEmail" value={saved.email} />
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
               <input
                 required
                 name="firstName"
@@ -212,7 +212,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
               <input
                 required
                 name="lastName"
@@ -223,7 +223,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
             <input
               required
               name="email"
@@ -279,7 +279,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid sm:grid-cols-2 gap-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
           <input
             required
             name="firstName"
@@ -289,7 +289,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
           <input
             required
             name="lastName"
@@ -300,7 +300,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
         <input
           required
           name="email"
@@ -319,7 +319,9 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Upload CV</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Upload CV <span className="text-red-500">*</span>
+        </label>
         <input
           required
           name="cv"
