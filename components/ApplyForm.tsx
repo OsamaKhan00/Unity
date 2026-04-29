@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import AuthPromptModal from "./AuthPromptModal";
 
 interface ApplyFormProps {
   jobId: string;
@@ -70,9 +72,24 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [guestMode, setGuestMode] = useState(false);
 
   useEffect(() => {
-    setSaved(getSavedApplication(jobId));
+    const savedApp = getSavedApplication(jobId);
+    setSaved(savedApp);
+
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const signedIn = !!data.user;
+      setIsSignedIn(signedIn);
+      setAuthLoading(false);
+      if (!signedIn && !savedApp) {
+        setShowModal(true);
+      }
+    });
   }, [jobId]);
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -146,9 +163,21 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
     setUpdateSuccess(true);
   }
 
-  // Already applied — show applied state
-  if (saved && !editing) {
-    return (
+  if (authLoading) {
+    return <div className="py-6 text-center text-gray-400 text-sm animate-pulse">Loading…</div>;
+  }
+
+  return (
+    <>
+      <AuthPromptModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onGuestClick={() => { setGuestMode(true); setShowModal(false); }}
+        context="apply"
+      />
+
+      {/* Already applied */}
+      {saved && !editing && (
       <div className="space-y-5">
         <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-5">
           <div className="mt-0.5 shrink-0">
@@ -178,12 +207,10 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
           Edit Application
         </button>
       </div>
-    );
-  }
+      )}
 
-  // Edit mode
-  if (saved && editing) {
-    return (
+      {/* Edit mode */}
+      {saved && editing && (
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">Update your application for <strong>{jobTitle}</strong>.</p>
@@ -271,82 +298,83 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
           </button>
         </form>
       </div>
-    );
-  }
+      )}
 
-  // New application form
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid sm:grid-cols-2 gap-5">
+      {/* New application form */}
+      {!saved && (isSignedIn || guestMode) && (
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
+            <input
+              required
+              name="firstName"
+              type="text"
+              placeholder="Jane"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
+            <input
+              required
+              name="lastName"
+              type="text"
+              placeholder="Smith"
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          </div>
+        </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
           <input
             required
-            name="firstName"
-            type="text"
-            placeholder="Jane"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
           <input
-            required
-            name="lastName"
-            type="text"
-            placeholder="Smith"
+            name="phone"
+            type="tel"
+            placeholder="+1 206 555 0100"
             className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
-        <input
-          required
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-        <input
-          name="phone"
-          type="tel"
-          placeholder="+1 206 555 0100"
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Upload CV <span className="text-red-500">*</span>
-        </label>
-        <input
-          required
-          name="cv"
-          type="file"
-          accept=".pdf,.doc,.docx"
-          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-        />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
-        <textarea
-          name="coverLetter"
-          rows={4}
-          placeholder="Tell us why you'd be a great fit..."
-          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-        />
-      </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60"
-      >
-        {loading ? 'Submitting…' : 'Submit Application'}
-      </button>
-    </form>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Upload CV <span className="text-red-500">*</span>
+          </label>
+          <input
+            required
+            name="cv"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
+          <textarea
+            name="coverLetter"
+            rows={4}
+            placeholder="Tell us why you'd be a great fit..."
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+          />
+        </div>
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60"
+        >
+          {loading ? 'Submitting…' : 'Submit Application'}
+        </button>
+      </form>
+      )}
+    </>
   );
 }
