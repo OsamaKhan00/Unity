@@ -66,11 +66,12 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
 
-    // Attach role to response headers so server components can read them
-    const response = NextResponse.next();
-    response.headers.set('x-admin-role', session.role);
-    response.headers.set('x-admin-email', session.email);
-    return response;
+    // Forward role + email as REQUEST headers so API route handlers can read them
+    // without re-verifying the token on every request.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-admin-role', session.role);
+    requestHeaders.set('x-admin-email', session.email);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   return NextResponse.next();

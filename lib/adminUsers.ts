@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { Permission } from './permissions';
 
 export type AdminRole = 'super_admin' | 'admin' | 'editor' | 'viewer';
 
@@ -10,6 +11,8 @@ export interface AdminUser {
   passwordHash: string;
   active: boolean;
   createdAt: string;
+  permissions: Permission[];
+  permissionsUpdatedAt: string | null;
 }
 
 export function hashPassword(password: string): string {
@@ -27,6 +30,8 @@ export function adminUserFromRow(r: any): AdminUser {
     passwordHash: r.password_hash ?? '',
     active: r.active ?? true,
     createdAt: r.created_at ?? new Date().toISOString(),
+    permissions: Array.isArray(r.permissions) ? r.permissions : [],
+    permissionsUpdatedAt: r.permissions_updated_at ?? null,
   };
 }
 
@@ -40,6 +45,8 @@ export function adminUserToRow(u: AdminUser): any {
     password_hash: u.passwordHash,
     active: u.active,
     created_at: u.createdAt,
+    permissions: u.permissions,
+    permissions_updated_at: u.permissionsUpdatedAt,
   };
 }
 

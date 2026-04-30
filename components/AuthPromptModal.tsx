@@ -53,7 +53,7 @@ export default function AuthPromptModal({ isOpen, onClose, onGuestClick, context
                 : 'Create an account to save jobs and get matched with the right opportunities.'}
             </p>
             <button
-              onClick={() => router.push('/register')}
+              onClick={() => { onClose(); router.push('/register'); }}
               className="w-full bg-gray-900 text-white font-semibold py-3 px-6 rounded-full hover:bg-gray-700 transition text-sm tracking-widest uppercase"
             >
               Sign Up

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sendApplicationConfirmationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Fire confirmation email — don't block the response if it fails
+  sendApplicationConfirmationEmail(email, { firstName, jobTitle, applicationId: id }).catch(() => {});
 
   return NextResponse.json({ success: true, id });
 }

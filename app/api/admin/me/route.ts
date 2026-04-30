@@ -1,26 +1,35 @@
 import { NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/middleware';
-import { adminUserFromRow } from '@/lib/adminUsers';
+import { getSessionFromHeaders } from '@/lib/permissionCheck';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ALL_PERMISSIONS } from '@/lib/permissions';
 
 export async function GET(request: Request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/admin_token=([^;]+)/);
-  const token = match?.[1];
-  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const session = await verifyAdminToken(token, process.env.ADMIN_SECRET ?? '');
+  const session = getSessionFromHeaders(request);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  if (session.email === process.env.ADMIN_EMAIL)
-    return NextResponse.json({ email: session.email, role: 'super_admin', name: 'Super Admin' });
+  // Super admin has all permissions implicitly
+  if (session.role === 'super_admin') {
+    return NextResponse.json({
+      email: session.email,
+      role: 'super_admin',
+      name: 'Super Admin',
+      permissions: ALL_PERMISSIONS,
+    });
+  }
 
   const { data } = await createAdminClient()
-    .from('admin_users').select('*').eq('email', session.email).single();
-  const admin = data ? adminUserFromRow(data) : null;
+    .from('admin_users')
+    .select('name, role, active, permissions')
+    .eq('email', session.email)
+    .single();
+
+  if (!data || !data.active)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   return NextResponse.json({
     email: session.email,
     role: session.role,
-    name: admin?.name ?? session.email,
+    name: data.name ?? session.email,
+    permissions: Array.isArray(data.permissions) ? data.permissions : [],
   });
 }

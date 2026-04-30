@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requirePermission } from '@/lib/permissionCheck';
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const check = await requirePermission(request, 'jobs.view');
+  if (!check.ok) return check.response;
+
   const { id } = await params;
   const { data, error } = await createAdminClient()
     .from('jobs').select('*').eq('id', id).single();
@@ -10,6 +14,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const check = await requirePermission(request, 'jobs.edit');
+  if (!check.ok) return check.response;
+
   const { id } = await params;
   const body = await request.json();
   const { data, error } = await createAdminClient()
@@ -29,7 +36,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return NextResponse.json(data);
 }
 
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const check = await requirePermission(request, 'jobs.delete');
+  if (!check.ok) return check.response;
+
   const { id } = await params;
   const { error } = await createAdminClient().from('jobs').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

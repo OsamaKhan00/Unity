@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import AuthPromptModal from '@/components/AuthPromptModal';
 
 const links = [
   { href: '/about',    label: 'About'    },
@@ -22,6 +23,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -57,6 +59,7 @@ export default function Navbar() {
     : user?.email?.slice(0, 2).toUpperCase() ?? '';
 
   return (
+    <>
     <nav className={`bg-white/95 backdrop-blur sticky top-0 z-50 border-b border-gray-200 transition-shadow duration-200 ${scrolled ? 'shadow-md' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         {/* Logo */}
@@ -119,12 +122,12 @@ export default function Navbar() {
               >
                 My Applications
               </Link>
-              <Link
-                href="/login"
+              <button
+                onClick={() => setShowAuthModal(true)}
                 className="hidden sm:block text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition"
               >
                 Sign in
-              </Link>
+              </button>
               <Link
                 href="/register"
                 className="text-sm font-semibold bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm"
@@ -183,9 +186,9 @@ export default function Navbar() {
                 <Link href="/my-applications" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-medium text-brand-700 border border-brand-200 rounded-lg hover:bg-brand-50 transition">
                   My Applications
                 </Link>
-                <Link href="/login" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                <button onClick={() => { setMenuOpen(false); setShowAuthModal(true); }} className="flex-1 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                   Sign in
-                </Link>
+                </button>
                 <Link href="/register" onClick={() => setMenuOpen(false)} className="flex-1 text-center py-2.5 text-sm font-semibold text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition">
                   Get Started
                 </Link>
@@ -195,5 +198,13 @@ export default function Navbar() {
         </div>
       )}
     </nav>
+
+    <AuthPromptModal
+      isOpen={showAuthModal}
+      onClose={() => setShowAuthModal(false)}
+      onGuestClick={() => setShowAuthModal(false)}
+      context="home"
+    />
+    </>
   );
 }

@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requirePermission } from '@/lib/permissionCheck';
 import { SiteContent } from '@/lib/contentData';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const check = await requirePermission(request, 'content.view');
+  if (!check.ok) return check.response;
+
   const { data, error } = await createAdminClient()
     .from('site_content').select('data').eq('id', 1).single();
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 500 });
@@ -10,6 +14,9 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const check = await requirePermission(request, 'content.edit');
+  if (!check.ok) return check.response;
+
   const body = await request.json() as Partial<SiteContent>;
   const { data: current, error: readErr } = await createAdminClient()
     .from('site_content').select('data').eq('id', 1).single();

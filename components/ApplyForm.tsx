@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AuthPromptModal from "./AuthPromptModal";
 
@@ -67,6 +68,7 @@ function saveApplication(jobId: string, jobTitle: string, data: SavedApplication
 }
 
 export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
+  const router = useRouter();
   const [saved, setSaved] = useState<SavedApplication | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -115,8 +117,9 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
     }
 
     const json = await res.json();
+    const appId = json.id ?? Date.now().toString();
     const appData: SavedApplication = {
-      applicationId: json.id ?? Date.now().toString(),
+      applicationId: appId,
       firstName: data.get('firstName') as string,
       lastName: data.get('lastName') as string,
       email: data.get('email') as string,
@@ -124,7 +127,7 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
       coverLetter: (data.get('coverLetter') as string) ?? '',
     };
     saveApplication(jobId, jobTitle, appData);
-    setSaved(appData);
+    router.push(`/application-submitted/${appId}?job=${encodeURIComponent(jobTitle)}&name=${encodeURIComponent(appData.firstName)}&email=${encodeURIComponent(appData.email)}`);
   }
 
   async function handleUpdate(e: React.SyntheticEvent<HTMLFormElement>) {

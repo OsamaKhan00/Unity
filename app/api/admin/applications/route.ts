@@ -1,40 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { verifyAdminToken } from '@/middleware';
-
-async function getSession(request: Request) {
-  const cookie = request.headers.get('cookie') ?? '';
-  const match = cookie.match(/admin_token=([^;]+)/);
-  const token = match?.[1];
-  if (!token) return null;
-  return verifyAdminToken(token, process.env.ADMIN_SECRET ?? '');
-}
+import { requirePermission, getSessionFromHeaders } from '@/lib/permissionCheck';
 
 export async function GET(request: Request) {
-  const session = await getSession(request);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const check = await requirePermission(request, 'applications.view');
+  if (!check.ok) return check.response;
 
-  const isSuperAdmin = session.role === 'super_admin' || session.email === process.env.ADMIN_EMAIL;
-  const isAdmin = session.role === 'admin';
-  const isEditor = session.role === 'editor';
+  const session = getSessionFromHeaders(request);
+  const role = session?.role ?? '';
+  const email = session?.email ?? '';
 
   const jobId = new URL(request.url).searchParams.get('jobId');
+  const isSuperAdmin = role === 'super_admin';
+  const isAdmin      = role === 'admin';
+  const isEditor     = role === 'editor';
 
   let query = createAdminClient()
     .from('applications')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (jobId) {
-    query = query.eq('job_id', jobId);
-  }
+  if (jobId) query = query.eq('job_id', jobId);
 
-  // Non-admin roles only see their own assigned applications
+  // Viewers only see applications assigned to them
   if (!isSuperAdmin && !isAdmin && !isEditor) {
     const { data: recruiterRow } = await createAdminClient()
       .from('admin_users')
       .select('id')
-      .eq('email', session.email)
+      .eq('email', email)
       .single();
 
     if (recruiterRow) {

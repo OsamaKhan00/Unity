@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { requirePermission } from '@/lib/permissionCheck';
 import { Project, projectFromRow, projectToRow } from '@/lib/contentData';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const check = await requirePermission(request, 'projects.view');
+  if (!check.ok) return check.response;
+
   const { data, error } = await createAdminClient()
     .from('projects').select('*').order('year', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -10,6 +14,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const check = await requirePermission(request, 'projects.manage');
+  if (!check.ok) return check.response;
+
   const body = await request.json() as Partial<Project>;
   const newProject: Project = {
     id: Date.now().toString(),
