@@ -184,3 +184,25 @@ ALTER TABLE applications
 ALTER TABLE jobs
   ADD COLUMN IF NOT EXISTS status   TEXT NOT NULL DEFAULT 'active',
   ADD COLUMN IF NOT EXISTS location TEXT NOT NULL DEFAULT '';
+
+-- ── Candidate profiles (linked to Supabase auth.users) ────────────────────────
+
+CREATE TABLE IF NOT EXISTS candidate_profiles (
+  user_id     TEXT        PRIMARY KEY,
+  phone       TEXT        NOT NULL DEFAULT '',
+  location    TEXT        NOT NULL DEFAULT '',
+  linkedin    TEXT        NOT NULL DEFAULT '',
+  bio         TEXT        NOT NULL DEFAULT '',
+  cv_url      TEXT        NOT NULL DEFAULT '',
+  cv_filename TEXT        NOT NULL DEFAULT '',
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Add linkedin to applications so it's visible in the admin without a join
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS linkedin TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE candidate_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "own_profile_select" ON candidate_profiles FOR SELECT  USING (auth.uid()::text = user_id);
+CREATE POLICY "own_profile_insert" ON candidate_profiles FOR INSERT  WITH CHECK (auth.uid()::text = user_id);
+CREATE POLICY "own_profile_update" ON candidate_profiles FOR UPDATE  USING (auth.uid()::text = user_id);

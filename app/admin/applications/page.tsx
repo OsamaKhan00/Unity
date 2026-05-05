@@ -11,6 +11,7 @@ interface Application {
   phone: string;
   cover_letter: string;
   cv_url: string;
+  linkedin: string;
   status: string;
   recruiter_id: string;
   recruiter_name: string;
@@ -30,12 +31,13 @@ interface AdminMe {
   name: string;
 }
 
-const STATUSES = ['new', 'reviewed', 'shortlisted', 'rejected'];
+const STATUSES = ['new', 'reviewed', 'shortlisted', 'placed', 'rejected'];
 
 const statusColors: Record<string, string> = {
   new:         'bg-blue-100 text-blue-700',
   reviewed:    'bg-yellow-100 text-yellow-700',
   shortlisted: 'bg-green-100 text-green-700',
+  placed:      'bg-purple-100 text-purple-700',
   rejected:    'bg-red-100 text-red-700',
 };
 
@@ -189,15 +191,26 @@ export default function AdminApplicationsPage() {
                 </button>
               </div>
 
-              {/* Expanded cover letter */}
+              {/* Expanded details */}
               {expanded === app.id && (
-                <div className="border-t border-gray-100 px-5 py-4 bg-gray-50">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cover Letter</p>
-                  {app.cover_letter ? (
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{app.cover_letter}</p>
-                  ) : (
-                    <p className="text-sm text-gray-400 italic">No cover letter provided.</p>
+                <div className="border-t border-gray-100 px-5 py-4 bg-gray-50 space-y-4">
+                  {app.linkedin && (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">LinkedIn</p>
+                      <a href={app.linkedin} target="_blank" rel="noopener noreferrer"
+                        className="text-sm text-brand-600 hover:underline break-all">
+                        {app.linkedin}
+                      </a>
+                    </div>
                   )}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cover Letter</p>
+                    {app.cover_letter ? (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{app.cover_letter}</p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">No cover letter provided.</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

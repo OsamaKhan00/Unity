@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import AuthPromptModal from "./AuthPromptModal";
 
@@ -16,7 +17,6 @@ interface SavedApplication {
   lastName: string;
   email: string;
   phone: string;
-  coverLetter: string;
 }
 
 interface GuestApplicationEntry extends SavedApplication {
@@ -26,12 +26,20 @@ interface GuestApplicationEntry extends SavedApplication {
   submittedAt: string;
 }
 
+interface UserProfile {
+  phone: string;
+  location: string;
+  linkedin: string;
+  bio: string;
+  cv_url: string;
+  cv_filename: string;
+}
+
 function getSavedApplication(jobId: string): SavedApplication | null {
   try {
     const stored = localStorage.getItem('appliedJobs');
     if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    return parsed[jobId] ?? null;
+    return JSON.parse(stored)[jobId] ?? null;
   } catch {
     return null;
   }
@@ -39,45 +47,36 @@ function getSavedApplication(jobId: string): SavedApplication | null {
 
 function saveApplication(jobId: string, jobTitle: string, data: SavedApplication) {
   try {
-    // Per-job lookup (used by ApplyForm to detect already-applied state)
     const stored = localStorage.getItem('appliedJobs');
     const parsed = stored ? JSON.parse(stored) : {};
     parsed[jobId] = data;
     localStorage.setItem('appliedJobs', JSON.stringify(parsed));
 
-    // Global list used by My Applications page
     const listStored = localStorage.getItem('guestApplications');
     const list: GuestApplicationEntry[] = listStored ? JSON.parse(listStored) : [];
     const entry: GuestApplicationEntry = {
-      ...data,
-      jobId,
-      jobTitle,
-      status: 'new',
-      submittedAt: new Date().toISOString(),
+      ...data, jobId, jobTitle, status: 'new', submittedAt: new Date().toISOString(),
     };
     const idx = list.findIndex(a => a.applicationId === data.applicationId);
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...entry };
-    } else {
-      list.unshift(entry);
-    }
+    if (idx >= 0) list[idx] = { ...list[idx], ...entry };
+    else list.unshift(entry);
     localStorage.setItem('guestApplications', JSON.stringify(list));
-  } catch {
-    // ignore storage errors
-  }
+  } catch { /* ignore */ }
 }
 
 export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
   const router = useRouter();
-  const [saved, setSaved] = useState<SavedApplication | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [updateSuccess, setUpdateSuccess] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [guestMode, setGuestMode] = useState(false);
+  const [saved, setSaved]               = useState<SavedApplication | null>(null);
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState('');
+  const [authLoading, setAuthLoading]   = useState(true);
+  const [isSignedIn, setIsSignedIn]     = useState(false);
+  const [userEmail, setUserEmail]       = useState('');
+  const [userFullName, setUserFullName] = useState('');
+  const [profile, setProfile]           = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [showModal, setShowModal]       = useState(false);
+  const [guestMode, setGuestMode]       = useState(false);
 
   useEffect(() => {
     const savedApp = getSavedApplication(jobId);
@@ -85,88 +84,74 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
 
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
-      const signedIn = !!data.user;
-      setIsSignedIn(signedIn);
-      setAuthLoading(false);
-      if (!signedIn && !savedApp) {
-        setShowModal(true);
+      const user = data.user;
+      if (user) {
+        setIsSignedIn(true);
+        setUserEmail(user.email ?? '');
+        setUserFullName(user.user_metadata?.full_name ?? '');
+        setProfileLoading(true);
+        fetch('/api/profile')
+          .then(r => r.json())
+          .then((p: UserProfile) => { setProfile(p); setProfileLoading(false); })
+          .catch(() => setProfileLoading(false));
+      } else {
+        if (!savedApp) setShowModal(true);
       }
+      setAuthLoading(false);
     });
   }, [jobId]);
 
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submit(data: FormData) {
     setLoading(true);
     setError('');
-
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    data.set('jobId', jobId);
-    data.set('jobTitle', jobTitle);
-
-    const res = await fetch('/api/jobs/apply', {
-      method: 'POST',
-      body: data,
-    });
-
+    const res = await fetch('/api/jobs/apply', { method: 'POST', body: data });
     setLoading(false);
-
-    if (!res.ok) {
-      setError('Something went wrong. Please try again.');
-      return;
-    }
-
+    if (!res.ok) { setError('Something went wrong. Please try again.'); return; }
     const json = await res.json();
     const appId = json.id ?? Date.now().toString();
-    const appData: SavedApplication = {
+    const firstName = data.get('firstName') as string;
+    const email     = data.get('email') as string;
+    saveApplication(jobId, jobTitle, {
       applicationId: appId,
-      firstName: data.get('firstName') as string,
-      lastName: data.get('lastName') as string,
-      email: data.get('email') as string,
+      firstName,
+      lastName: (data.get('lastName') as string) ?? '',
+      email,
       phone: (data.get('phone') as string) ?? '',
-      coverLetter: (data.get('coverLetter') as string) ?? '',
-    };
-    saveApplication(jobId, jobTitle, appData);
-    router.push(`/application-submitted/${appId}?job=${encodeURIComponent(jobTitle)}&name=${encodeURIComponent(appData.firstName)}&email=${encodeURIComponent(appData.email)}`);
-  }
-
-  async function handleUpdate(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!saved) return;
-    setLoading(true);
-    setError('');
-    setUpdateSuccess(false);
-
-    const form = e.currentTarget;
-    const data = new FormData(form);
-
-    const res = await fetch(`/api/jobs/apply/${saved.applicationId}`, {
-      method: 'PUT',
-      body: data,
     });
-
-    setLoading(false);
-
-    if (!res.ok) {
-      setError('Something went wrong. Please try again.');
-      return;
-    }
-
-    const updatedApp: SavedApplication = {
-      ...saved,
-      firstName: data.get('firstName') as string,
-      lastName: data.get('lastName') as string,
-      email: data.get('email') as string,
-      phone: (data.get('phone') as string) ?? '',
-      coverLetter: (data.get('coverLetter') as string) ?? '',
-    };
-    saveApplication(jobId, jobTitle, updatedApp);
-    setSaved(updatedApp);
-    setEditing(false);
-    setUpdateSuccess(true);
+    router.push(`/application-submitted/${appId}?job=${encodeURIComponent(jobTitle)}&name=${encodeURIComponent(firstName)}&email=${encodeURIComponent(email)}`);
   }
 
-  if (authLoading) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    data.set('jobId', jobId);
+    data.set('jobTitle', jobTitle);
+    await submit(data);
+  }
+
+  async function handleQuickApply(e: React.SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!profile?.cv_url) return;
+    const nameParts  = userFullName.trim().split(' ');
+    const firstName  = nameParts[0] || '';
+    const lastName   = nameParts.slice(1).join(' ') || '';
+    const coverLetter = (new FormData(e.currentTarget).get('coverLetter') as string) ?? '';
+    const data = new FormData();
+    data.set('jobId', jobId);
+    data.set('jobTitle', jobTitle);
+    data.set('firstName', firstName);
+    data.set('lastName', lastName);
+    data.set('email', userEmail);
+    data.set('phone', profile.phone ?? '');
+    data.set('coverLetter', coverLetter);
+    data.set('cvUrl', profile.cv_url);
+    data.set('linkedin', profile.linkedin ?? '');
+    await submit(data);
+  }
+
+  const inputCls = 'w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500';
+
+  if (authLoading || (isSignedIn && profileLoading)) {
     return <div className="py-6 text-center text-gray-400 text-sm animate-pulse">Loading…</div>;
   }
 
@@ -179,15 +164,12 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
         context="apply"
       />
 
-      {/* Already applied */}
-      {saved && !editing && (
-      <div className="space-y-5">
+      {/* ── Already applied ─────────────────────────────────────── */}
+      {saved && (
         <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-5">
-          <div className="mt-0.5 shrink-0">
-            <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+          <svg className="w-5 h-5 text-green-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           <div className="flex-1">
             <p className="font-semibold text-green-800">Application submitted</p>
             <p className="text-green-700 text-sm mt-0.5">
@@ -196,187 +178,137 @@ export default function ApplyForm({ jobId, jobTitle }: ApplyFormProps) {
             </p>
           </div>
         </div>
-
-        {updateSuccess && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-5 py-3 text-sm text-blue-700 font-medium">
-            Application updated successfully.
-          </div>
-        )}
-
-        <button
-          onClick={() => { setEditing(true); setUpdateSuccess(false); }}
-          className="w-full border border-brand-500 text-brand-600 font-semibold py-3 rounded-lg hover:bg-brand-50 transition"
-        >
-          Edit Application
-        </button>
-      </div>
       )}
 
-      {/* Edit mode */}
-      {saved && editing && (
-      <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">Update your application for <strong>{jobTitle}</strong>.</p>
-          <button
-            onClick={() => setEditing(false)}
-            className="text-sm text-gray-400 hover:text-gray-600 flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Cancel
+      {/* ── One-click apply (signed in + complete profile) ──────── */}
+      {!saved && isSignedIn && profile?.cv_url && (
+        <form onSubmit={handleQuickApply} className="space-y-5">
+          <div className="bg-brand-50 border border-brand-200 rounded-xl p-5 space-y-3">
+            <p className="text-sm font-semibold text-brand-800">Applying with your profile</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <div>
+                <span className="text-xs text-gray-500 block">Name</span>
+                <span className="font-medium text-gray-900">{userFullName}</span>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500 block">Email</span>
+                <span className="font-medium text-gray-900 break-all">{userEmail}</span>
+              </div>
+              {profile.phone && (
+                <div>
+                  <span className="text-xs text-gray-500 block">Phone</span>
+                  <span className="font-medium text-gray-900">{profile.phone}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-xs text-gray-500 block">CV</span>
+                <a href={profile.cv_url} target="_blank" rel="noopener noreferrer"
+                  className="font-medium text-brand-600 hover:underline text-sm">
+                  {profile.cv_filename || 'CV on file'} →
+                </a>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
+            <textarea name="coverLetter" rows={4} placeholder="Tell us why you'd be a great fit…" className={`${inputCls} resize-none`} />
+          </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button type="submit" disabled={loading}
+            className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60">
+            {loading ? 'Submitting…' : 'Apply Now'}
           </button>
-        </div>
+          <p className="text-center text-xs text-gray-400">
+            Wrong details?{' '}
+            <Link href="/profile" className="text-brand-600 hover:underline">Update your profile →</Link>
+          </p>
+        </form>
+      )}
 
-        <form onSubmit={handleUpdate} className="space-y-5">
-          <input type="hidden" name="verifyEmail" value={saved.email} />
+      {/* ── Signed in but no CV yet ─────────────────────────────── */}
+      {!saved && isSignedIn && profile && !profile.cv_url && (
+        <div className="space-y-5">
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374l7.108-12.38c.866-1.5 3.032-1.5 3.898 0l1.186 2.063M12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <p className="text-xs text-amber-800">
+              <Link href="/profile" className="font-semibold underline">Add your CV to your profile</Link> to apply with one click next time.
+            </p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
+                <input required name="firstName" type="text" defaultValue={userFullName.split(' ')[0] ?? ''} className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input name="lastName" type="text" defaultValue={userFullName.split(' ').slice(1).join(' ')} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+              <input required name="email" type="email" defaultValue={userEmail} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
+              <input name="phone" type="tel" defaultValue={profile.phone ?? ''} className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Upload CV <span className="text-red-500">*</span></label>
+              <input required name="cv" type="file" accept=".pdf,.doc,.docx"
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
+              <textarea name="coverLetter" rows={4} placeholder="Tell us why you'd be a great fit…" className={`${inputCls} resize-none`} />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <button type="submit" disabled={loading}
+              className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60">
+              {loading ? 'Submitting…' : 'Submit Application'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Guest form ──────────────────────────────────────────── */}
+      {!saved && !isSignedIn && guestMode && (
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid sm:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
-              <input
-                required
-                name="firstName"
-                type="text"
-                defaultValue={saved.firstName}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+              <input required name="firstName" type="text" placeholder="Jane" className={inputCls} />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
-              <input
-                required
-                name="lastName"
-                type="text"
-                defaultValue={saved.lastName}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input name="lastName" type="text" placeholder="Smith" className={inputCls} />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
-            <input
-              required
-              name="email"
-              type="email"
-              defaultValue={saved.email}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
+            <input required name="email" type="email" placeholder="you@example.com" className={inputCls} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-            <input
-              name="phone"
-              type="tel"
-              defaultValue={saved.phone}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
+            <input name="phone" type="tel" placeholder="+1 206 555 0100" className={inputCls} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload CV <span className="text-gray-400 font-normal">(leave empty to keep existing)</span>
-            </label>
-            <input
-              name="cv"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Upload CV <span className="text-red-500">*</span></label>
+            <input required name="cv" type="file" accept=".pdf,.doc,.docx"
+              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
-            <textarea
-              name="coverLetter"
-              rows={4}
-              defaultValue={saved.coverLetter}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-            />
+            <textarea name="coverLetter" rows={4} placeholder="Tell us why you'd be a great fit…" className={`${inputCls} resize-none`} />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60"
-          >
-            {loading ? 'Saving…' : 'Save Changes'}
+          <button type="submit" disabled={loading}
+            className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60">
+            {loading ? 'Submitting…' : 'Submit Application'}
           </button>
         </form>
-      </div>
-      )}
-
-      {/* New application form */}
-      {!saved && (isSignedIn || guestMode) && (
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
-            <input
-              required
-              name="firstName"
-              type="text"
-              placeholder="Jane"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
-            <input
-              required
-              name="lastName"
-              type="text"
-              placeholder="Smith"
-              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-            />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
-          <input
-            required
-            name="email"
-            type="email"
-            placeholder="you@example.com"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-          <input
-            name="phone"
-            type="tel"
-            placeholder="+1 206 555 0100"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Upload CV <span className="text-red-500">*</span>
-          </label>
-          <input
-            required
-            name="cv"
-            type="file"
-            accept=".pdf,.doc,.docx"
-            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter (optional)</label>
-          <textarea
-            name="coverLetter"
-            rows={4}
-            placeholder="Tell us why you'd be a great fit..."
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-brand-600 text-white font-semibold py-3 rounded-lg hover:bg-brand-700 transition disabled:opacity-60"
-        >
-          {loading ? 'Submitting…' : 'Submit Application'}
-        </button>
-      </form>
       )}
     </>
   );

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requirePermission, isSuperAdminRequest, getSessionFromHeaders } from '@/lib/permissionCheck';
+import { sendStatusChangeEmail } from '@/lib/email';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const check = await requirePermission(request, 'applications.edit');
@@ -23,9 +24,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     updates.recruiter_name = body.recruiter_name ?? '';
   }
 
-  const { error } = await createAdminClient()
-    .from('applications').update(updates).eq('id', id);
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('applications').update(updates).eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Send status-change email to candidate (fire-and-forget)
+  if (body.status !== undefined) {
+    supabase.from('applications')
+      .select('email, first_name, job_title')
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        if (data?.email) {
+          sendStatusChangeEmail(data.email, {
+            firstName: data.first_name,
+            jobTitle:  data.job_title,
+            status:    body.status,
+          }).catch(() => {});
+        }
+      });
+  }
+
   return NextResponse.json({ success: true });
 }
 

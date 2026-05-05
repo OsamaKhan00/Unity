@@ -1,6 +1,25 @@
 import Link from "next/link";
 import ApplyForm from "@/components/ApplyForm";
 import { getJobList, getJobDescriptions } from "@/lib/jobs";
+import type { Metadata } from "next";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const jobs = await getJobList();
+  const job = jobs.find((j) => j.id === id);
+  if (!job) return { title: "Position Not Found — Apex Talent Group" };
+  const description = [job.type, job.vertical, job.location, job.salary]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    title: `${job.title} — Apex Talent Group`,
+    description: `${description}. Apply now at Apex Talent Group.`,
+    openGraph: {
+      title: `${job.title} — Apex Talent Group`,
+      description: `${description}. Apply now at Apex Talent Group.`,
+    },
+  };
+}
 
 export default async function CareerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

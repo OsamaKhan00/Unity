@@ -33,8 +33,15 @@ export default function AdminDashboard() {
   const [loading, setLoading]   = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [statusTab, setStatusTab] = useState<StatusTab>('All');
+  const [appCount, setAppCount] = useState<number | null>(null);
 
-  useEffect(() => { fetchJobs(); }, []);
+  useEffect(() => {
+    fetchJobs();
+    fetch('/api/admin/applications')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: unknown[]) => setAppCount(data.length))
+      .catch(() => {});
+  }, []);
 
   async function fetchJobs() {
     const r = await fetch('/api/admin/jobs');
@@ -65,7 +72,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-6">
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Jobs</p>
           <p className="text-3xl font-extrabold text-gray-900">{jobs.length}</p>
@@ -76,6 +83,12 @@ export default function AdminDashboard() {
             <p className="text-3xl font-extrabold text-gray-900">{counts[v] ?? 0}</p>
           </div>
         ))}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Applications</p>
+          <p className="text-3xl font-extrabold text-gray-900">
+            {appCount === null ? <span className="text-gray-300">…</span> : appCount}
+          </p>
+        </div>
       </div>
 
       {/* Status summary chips */}

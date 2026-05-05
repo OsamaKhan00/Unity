@@ -1,8 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import AuthPromptModal from '@/components/AuthPromptModal';
-import { createClient } from '@/lib/supabase/client';
 
 // Jobs are fetched client-side so search/filter works interactively
 interface Job {
@@ -30,24 +28,12 @@ export default function CareersPage() {
   const [vertical, setVertical]   = useState('All');
   const [type, setType]           = useState('All');
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetch('/api/jobs')
       .then(r => r.ok ? r.json() : [])
       .then(data => { setJobs(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    try {
-      const supabase = createClient();
-      supabase.auth.getUser().then(({ data }) => {
-        if (!data.user) setShowModal(true);
-      });
-    } catch {
-      setShowModal(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -219,12 +205,6 @@ export default function CareersPage() {
         </div>
       </div>
 
-      <AuthPromptModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onGuestClick={() => setShowModal(false)}
-        context="home"
-      />
     </div>
   );
 }
