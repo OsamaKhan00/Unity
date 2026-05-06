@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Fire confirmation email — don't block the response if it fails
-  sendApplicationConfirmationEmail(email, { firstName, jobTitle, applicationId: id }).catch(() => {});
+  sendApplicationConfirmationEmail(email, { firstName, jobTitle, applicationId: id })
+    .catch(err => console.error('[email] confirmation failed:', err?.message ?? err));
 
   // Alert the assigned recruiter (fire-and-forget)
   if (jobData?.recruiter_id) {
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
             candidateName:  `${firstName} ${lastName}`.trim(),
             candidateEmail: email,
             jobTitle,
-          }).catch(() => {});
+          }).catch(err => console.error('[email] recruiter alert failed:', err?.message ?? err));
         }
       });
   }

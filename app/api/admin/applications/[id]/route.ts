@@ -40,7 +40,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             firstName: data.first_name,
             jobTitle:  data.job_title,
             status:    body.status,
-          }).catch(() => {});
+          }).catch(err => console.error('[email] status change failed:', err?.message ?? err));
         }
       });
   }
